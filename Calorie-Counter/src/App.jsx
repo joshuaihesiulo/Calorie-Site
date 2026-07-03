@@ -8,22 +8,73 @@ import StreakSection from './views/StreakSection';
 import HowItWorks from './views/HowItWorks';
 import { useBoundStore } from './store/useBoundStore';
 
+// Interactive App Flow Views
+import SignUpView from './components/SignUpView';
+import SignInView from './components/SignInView';
+import ScanResultView from './components/ScanResultView';
+import DailyDashboardView from './components/DailyDashboardView';
+
 export default function App() {
   const waitlistOpen = useBoundStore((state) => state.waitlistOpen);
   const toggleWaitlist = useBoundStore((state) => state.toggleWaitlist);
+  const currentView = useBoundStore((state) => state.currentView);
+  const setView = useBoundStore((state) => state.setView);
 
   return (
     <div className="min-h-screen bg-white font-sans text-[#2C3768] relative selection:bg-[#00F090] selection:text-[#2C3768]">
+      {/* Global Navigation Header Component */}
       <Navbar />
       
-      <main>
-        <HeroSection />
-        <ProblemSection />
-        <CounterSection />
-        <DecodedSection />
-        <StreakSection />
-        <HowItWorks />
-      </main>
+      {/* Dynamic Structural Viewport Controller */}
+      {currentView === 'landing' ? (
+        <main>
+          {/* Transparent Intercept Overlay Layer */}
+          {/* This acts as a click wrapper over the primary CTA grid to handle authentication shifts cleanly without editing section files */}
+          <div className="relative">
+            <HeroSection />
+            <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+              <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 px-6">
+                <div className="lg:col-span-6 lg:col-start-4 text-center flex flex-col items-center">
+                  {/* Positioned directly over existing CTA items to drive internal application actions */}
+                  <div className="mt-[27.5rem] sm:mt-[21.5rem] flex flex-col sm:flex-row gap-4 w-full justify-center pointer-events-auto">
+                    <button 
+                      onClick={() => setView('signup')}
+                      className="bg-transparent text-transparent pointer-events-auto w-full sm:w-52 h-14 cursor-pointer rounded-2xl"
+                      title="Launch App Workspace"
+                    >
+                      Sign Up Trigger Intercept
+                    </button>
+                    <button 
+                      onClick={() => setView('signin')}
+                      className="bg-transparent text-transparent pointer-events-auto w-full sm:w-52 h-14 cursor-pointer rounded-2xl"
+                      title="Login Portal"
+                    >
+                      Sign In Trigger Intercept
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Verbatim Preservation Stack of Remaining Project Sections */}
+          <ProblemSection />
+          <CounterSection />
+          <DecodedSection />
+          <StreakSection />
+          <HowItWorks />
+        </main>
+      ) : (
+        /* Responsive Viewport Wrapper for Application Simulator Screens */
+        <main className="bg-[#F9F8F4] py-12 px-4 min-h-[90vh] flex items-center justify-center transition-all duration-300">
+          <div className="w-full max-w-md bg-white rounded-[3rem] shadow-[0_24px_60px_rgba(44,55,104,0.12)] border-4 border-[#2C3768]/10 overflow-hidden">
+            {currentView === 'signup' && <SignUpView />}
+            {currentView === 'signin' && <SignInView />}
+            {currentView === 'result' && <ScanResultView />}
+            {currentView === 'dashboard' && <DailyDashboardView />}
+          </div>
+        </main>
+      )}
 
       {/* Global Waitlist Popup Modal */}
       {waitlistOpen && (
