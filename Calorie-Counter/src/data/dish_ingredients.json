@@ -1,0 +1,33 @@
+{
+  "jollof_rice": [
+    { "ingredient": "Rice, white, raw", "grams": 100 },
+    { "ingredient": "Tomato, canned, packed in juice", "grams": 60 },
+    { "ingredient": "Onion, fresh, raw", "grams": 20 },
+    { "ingredient": "Palm oil, red", "grams": 15 },
+    { "ingredient": "Pepper, chilli, fresh, raw", "grams": 5 }
+  ],
+  "egusi_soup": [
+    { "ingredient": "Melon seed, kernel only, dried, raw", "grams": 80 },
+    { "ingredient": "Palm oil, red", "grams": 30 },
+    { "ingredient": "Spinach, leaves, fresh, raw", "grams": 60 },
+    { "ingredient": "Beef meat, moderately fat, ca. 20% fat, raw", "grams": 100 },
+    { "ingredient": "Shrimp (crayfish), whole, dried", "grams": 15 },
+    { "ingredient": "Onion, fresh, raw", "grams": 15 }
+  ],
+  "pounded_yam": [
+    { "ingredient": "Yam, tuber, combined cultivars, raw (Nigeria)", "grams": 250 }
+  ],
+  "amala": [
+    { "ingredient": "Yam, tuber, combined cultivars, raw (Nigeria)", "grams": 200 }
+  ],
+  "fried_plantain": [
+    { "ingredient": "Plantain, deep fried in unfortified vegetable oil*", "grams": 150 }
+  ],
+  "moin_moin": [
+    { "ingredient": "Cowpea, white, dry, raw", "grams": 150 },
+    { "ingredient": "Melon seed, kernel only, dried, raw", "grams": 20 },
+    { "ingredient": "Palm oil, red", "grams": 20 },
+    { "ingredient": "Onion, fresh, raw", "grams": 15 },
+    { "ingredient": "Shrimp (crayfish), whole, dried", "grams": 10 }
+  ]
+}

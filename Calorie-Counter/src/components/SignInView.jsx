@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { useBoundStore } from '../store/useBoundStore';
-import { REAL_FOOD_IMAGES } from '../constants/images';
 
 export default function SignInView() {
   const setView = useBoundStore((state) => state.setView);
@@ -18,22 +17,12 @@ export default function SignInView() {
           </div>
           <div className="space-y-6">
             <h3 className="text-white font-black text-2xl tracking-tight leading-tight">
-              Welcome Back,<br />Champion
+              Welcome Back
             </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
-                <span className="text-2xl font-black text-[#00F090]">12</span>
-                <span className="text-[10px] font-bold text-white/50 block">Day Streak</span>
-              </div>
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/10 text-center">
-                <span className="text-2xl font-black text-[#00F090]">48</span>
-                <span className="text-[10px] font-bold text-white/50 block">Meals Logged</span>
-              </div>
-            </div>
             <ul className="space-y-3">
               {[
                 'Continue your streak',
-                'Check today\'s macros',
+                "Check today's macros",
                 'Log your next meal',
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
@@ -44,23 +33,6 @@ export default function SignInView() {
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
-
-        <div className="mt-auto pt-8">
-          <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#00F090]/30">
-                <img src={REAL_FOOD_IMAGES.userProfile} alt="" className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <span className="text-sm font-black text-white">Last session</span>
-                <span className="text-[11px] font-medium text-white/40 block">Yesterday, 7:30 PM</span>
-              </div>
-            </div>
-            <p className="text-xs font-medium text-white/60 leading-relaxed">
-              You logged Jollof Rice & Chicken — 720 Kcal. Keep it up!
-            </p>
           </div>
         </div>
       </div>
@@ -74,7 +46,7 @@ export default function SignInView() {
               <span className="text-xl font-black tracking-tight">NaijaCounts</span>
             </div>
             <h2 className="text-4xl font-black tracking-tight leading-none mb-3">
-              Hi Jason,<br />Welcome Back
+              Welcome Back
             </h2>
             <p className="text-gray-500 font-medium text-sm px-6">
               Jump back into your food log and keep your streak alive.
@@ -96,19 +68,19 @@ export default function SignInView() {
           }} className="space-y-4">
             <div className="relative flex items-center">
               <span className="absolute left-4 text-[#E92A43] font-black text-sm">@</span>
-              <input 
+              <input
                 ref={emailRef}
-                type="email" 
+                type="email"
                 required
-                defaultValue="Jason.Ground@gmail.com"
+                placeholder="you@example.com"
                 className="w-full pl-10 pr-4 py-4 rounded-2xl border-2 border-gray-100 font-bold text-sm focus:outline-none focus:border-[#2C3768] text-[#2C3768]"
               />
             </div>
 
             <div className="relative flex items-center">
               <span className="absolute left-4 w-2 h-2 rounded-full bg-[#FF7A30]" />
-              <input 
-                type="password" 
+              <input
+                type="password"
                 required
                 placeholder="•••••••••••••"
                 className="w-full pl-10 pr-4 py-4 rounded-2xl border-2 border-gray-100 font-bold text-sm focus:outline-none focus:border-[#2C3768] text-[#2C3768]"
@@ -122,28 +94,13 @@ export default function SignInView() {
               </label>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="w-full bg-[#2C3768] text-white font-black py-4 rounded-2xl shadow-lg shadow-[#2C3768]/20 hover:opacity-95 active:scale-[0.99] transition-all text-base mt-2"
             >
               Sign In
             </button>
           </form>
-
-          <div className="relative flex py-5 items-center justify-center my-4">
-            <div className="flex-grow border-t border-gray-200"></div>
-            <span className="flex-shrink mx-4 text-[10px] font-black text-[#2C3768]/60 uppercase tracking-wider">Or Continue With</span>
-            <div className="flex-grow border-t border-gray-200"></div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <button className="flex items-center justify-center gap-2 bg-[#FFF4CA] py-3.5 rounded-2xl font-bold text-xs border border-[#FFF4CA] shadow-sm text-[#2C3768] hover:opacity-90">
-              <span className="text-blue-600 font-bold">G</span> Google ID
-            </button>
-            <button className="flex items-center justify-center gap-2 bg-[#FFF4CA] py-3.5 rounded-2xl font-bold text-xs border border-[#FFF4CA] shadow-sm text-[#2C3768] hover:opacity-90">
-              <span className="text-black font-bold"></span> Apple ID
-            </button>
-          </div>
 
           <p className="text-center text-xs font-bold text-gray-500 mt-8">
             I don't have an account?{' '}

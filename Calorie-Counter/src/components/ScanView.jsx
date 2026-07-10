@@ -1,147 +1,177 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useBoundStore } from '../store/useBoundStore';
-import { REAL_FOOD_IMAGES } from '../constants/images';
-
-const RECENT_SCANS = [
-  { id: 1, image: REAL_FOOD_IMAGES.heroLeft, label: 'Amala' },
-  { id: 2, image: REAL_FOOD_IMAGES.heroRight, label: 'Jollof Rice' },
-  { id: 3, image: REAL_FOOD_IMAGES.riceBowl, label: 'Fried Rice' },
-  { id: 4, image: REAL_FOOD_IMAGES.suyaSmoke, label: 'Suya' },
-];
 
 export default function ScanView() {
   const setView = useBoundStore((state) => state.setView);
-  const [flashOn, setFlashOn] = useState(false);
-  const [capturedImage, setCapturedImage] = useState(null);
+  const analyzeFoodImage = useBoundStore((state) => state.analyzeFoodImage);
+  const scanLoading = useBoundStore((state) => state.scanLoading);
+  const scanError = useBoundStore((state) => state.scanError);
+  const geminiToken = useBoundStore((state) => state.geminiToken);
 
-  const handleCapture = () => {
-    const imgs = [REAL_FOOD_IMAGES.heroLeft, REAL_FOOD_IMAGES.heroRight, REAL_FOOD_IMAGES.riceBowl, REAL_FOOD_IMAGES.suyaSmoke];
-    setCapturedImage(imgs[Math.floor(Math.random() * imgs.length)]);
-    setTimeout(() => setView('result'), 800);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const [streamActive, setStreamActive] = useState(false);
+  const [cameraPermissionError, setCameraPermissionError] = useState(null);
+
+  useEffect(() => {
+    let activeStream = null;
+
+    async function startCamera() {
+      try {
+        setCameraPermissionError(null);
+        const constraints = {
+          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          activeStream = stream;
+          setStreamActive(true);
+        }
+      } catch (err) {
+        console.error("Camera connection failed:", err);
+        setCameraPermissionError("Camera access denied or unavailable. Please click below to select or capture a real plate photo from your camera roll.");
+      }
+    }
+
+    startCamera();
+
+    return () => {
+      if (activeStream) {
+        activeStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  const captureFrame = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const base64Data = canvas.toDataURL('image/jpeg', 0.9);
+    analyzeFoodImage(base64Data);
   };
 
-  const handleGallery = () => {
-    const imgs = [REAL_FOOD_IMAGES.heroLeft, REAL_FOOD_IMAGES.heroRight, REAL_FOOD_IMAGES.riceBowl, REAL_FOOD_IMAGES.suyaSmoke];
-    setCapturedImage(imgs[Math.floor(Math.random() * imgs.length)]);
-    setTimeout(() => setView('result'), 800);
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        analyzeFoodImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
-    <div className="flex flex-col min-h-[85vh] lg:min-h-[75vh]">
-      {/* Header */}
-      <div className="flex items-center justify-between p-5 lg:p-7 border-b border-gray-50">
+    <div className="flex flex-col min-h-[85vh] lg:min-h-[75vh] bg-[#05050A] text-[#E2E2E9] relative overflow-hidden">
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#6B5E96]/10 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-[#3E3759]/15 blur-[80px] pointer-events-none" />
+
+      <div className="flex items-center justify-between p-5 lg:p-7 border-b border-white/5 z-10 backdrop-blur-md bg-black/40">
         <div className="flex items-center gap-2.5">
-          <button onClick={() => setView('dashboard')} className="w-9 h-9 rounded-xl bg-[#FFF4CA] flex items-center justify-center text-sm font-bold hover:opacity-80 transition-opacity">
+          <button onClick={() => setView('dashboard')} className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm font-bold border border-white/10 transition-all text-white">
             ←
           </button>
-          <span className="text-lg font-black tracking-tight">Scan Meal</span>
+          <span className="text-lg font-black tracking-tight">Scan Plate Visuals</span>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setFlashOn(!flashOn)}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${flashOn ? 'bg-[#FFF4CA] text-[#2C3768]' : 'bg-gray-100 text-gray-400'}`}
-          >
-            {flashOn ? '⚡' : '☀'}
-          </button>
-          <button onClick={() => setView('dashboard')} className="bg-[#2C3768] text-white text-xs font-bold px-4 py-2 rounded-full shadow-md hover:opacity-90 transition-opacity">
-            Close
-          </button>
-        </div>
+        <button onClick={() => setView('dashboard')} className="bg-[#6B5E96] text-white text-xs font-bold px-4 py-2 rounded-full border border-white/10 hover:bg-[#6B5E96]/95">
+          Close
+        </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row flex-1">
-        {/* Main Camera Viewport */}
-        <div className="flex-1 flex flex-col items-center justify-center p-5 lg:p-8 bg-gray-50/50">
-          <div className="relative w-full max-w-lg aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-black shadow-2xl border-4 border-white">
-            {capturedImage ? (
-              <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 mx-auto rounded-full border-4 border-[#00F090]/60 animate-pulse mb-4 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full border-2 border-white/30" />
-                  </div>
-                  <p className="text-white/60 text-xs font-bold tracking-wider uppercase">Point at your dish</p>
-                </div>
-                {/* Scanner guide frame */}
-                <div className="absolute inset-8 border-2 border-dashed border-white/20 rounded-[2rem]" />
-                <div className="absolute top-8 left-8 w-8 h-8 border-t-4 border-l-4 border-[#00F090] rounded-tl-2xl" />
-                <div className="absolute top-8 right-8 w-8 h-8 border-t-4 border-r-4 border-[#00F090] rounded-tr-2xl" />
-                <div className="absolute bottom-8 left-8 w-8 h-8 border-b-4 border-l-4 border-[#00F090] rounded-bl-2xl" />
-                <div className="absolute bottom-8 right-8 w-8 h-8 border-b-4 border-r-4 border-[#00F090] rounded-br-2xl" />
-                {/* Scanning line animation */}
-                <div className="absolute left-0 right-0 h-0.5 bg-[#00F090]/40 animate-pulse" style={{ top: '45%' }} />
-              </div>
-            )}
-          </div>
-
-          {/* Capture Controls */}
-          <div className="flex items-center gap-6 mt-6">
-            <button
-              onClick={handleGallery}
-              className="w-14 h-14 rounded-full bg-[#FFF4CA] border-2 border-[#2C3768]/10 flex items-center justify-center text-lg font-bold shadow-md hover:scale-105 transition-transform"
-            >
-              🖼
-            </button>
-            <button
-              onClick={handleCapture}
-              className="w-20 h-20 rounded-full bg-white border-4 border-[#E92A43] flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
-            >
-              <div className="w-14 h-14 rounded-full bg-[#E92A43]" />
-            </button>
-            <button className="w-14 h-14 rounded-full bg-[#FFF4CA] border-2 border-[#2C3768]/10 flex items-center justify-center text-lg font-bold shadow-md hover:scale-105 transition-transform">
-              🔄
-            </button>
-          </div>
-          <p className="text-[11px] font-bold text-gray-400 mt-3 tracking-wider uppercase">Capture or upload your meal photo</p>
+      {!geminiToken && (
+        <div className="bg-amber-950/40 border-b border-amber-800/30 text-amber-300 px-6 py-3 text-xs font-bold flex items-center justify-between z-10">
+          <span>⚠️ Gemini API key required. Input your key into the top header to enable live inference.</span>
         </div>
+      )}
 
-        {/* Recent Scans Sidebar - Desktop */}
-        <div className="hidden lg:flex lg:w-72 xl:w-80 flex-col p-6 border-l border-gray-100 bg-gray-50/30">
-          <h3 className="text-sm font-black tracking-tight mb-4">Recent Scans</h3>
-          <div className="space-y-3 flex-1">
-            {RECENT_SCANS.map((scan) => (
-              <button
-                key={scan.id}
-                onClick={handleCapture}
-                className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-[#FFF4CA]/30 transition-colors text-left group"
-              >
-                <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-gray-100 group-hover:border-[#00F090]/30 transition-colors flex-shrink-0">
-                  <img src={scan.image} alt={scan.label} className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <span className="text-xs font-black block">{scan.label}</span>
-                  <span className="text-[10px] font-bold text-gray-400">Tap to re-scan</span>
-                </div>
-              </button>
-            ))}
-          </div>
+      <div className="flex flex-col lg:flex-row flex-1 z-10">
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
 
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="bg-[#E7F7AD]/40 rounded-2xl p-4 border border-[#E7F7AD]">
-              <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider block">Quick Tip</span>
-              <p className="text-xs font-bold text-[#2C3768] mt-1 leading-tight">Place your dish on a flat surface with good lighting for best results.</p>
+          {scanLoading ? (
+            <div className="w-full max-w-lg aspect-[4/3] rounded-[2.5rem] bg-[#12121A] flex flex-col items-center justify-center text-center p-8 border border-white/5">
+              <div className="w-16 h-16 rounded-full border-4 border-[#6B5E96] border-t-transparent animate-spin mb-4" />
+              <p className="text-white font-black text-lg tracking-tight">Sourcing Real Plate from WAFCT...</p>
+              <p className="text-[#8A8A9E] text-xs mt-1">Gemini identifying dish &amp; mapping FAO nutrient data dynamically.</p>
             </div>
-          </div>
-        </div>
+          ) : (
+            <div className="relative w-full max-w-lg aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-black shadow-2xl border-4 border-white/10">
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+              <canvas ref={canvasRef} className="hidden" />
 
-        {/* Recent Scans Row - Mobile */}
-        <div className="lg:hidden px-5 pb-5">
-          <h3 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Recent</h3>
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {RECENT_SCANS.map((scan) => (
-              <button
-                key={scan.id}
-                onClick={handleCapture}
-                className="flex-shrink-0 w-20 text-center group"
-              >
-                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-gray-100 group-hover:border-[#00F090]/40 transition-colors mb-1.5">
-                  <img src={scan.image} alt={scan.label} className="w-full h-full object-cover" />
+              {cameraPermissionError && (
+                <div className="absolute inset-0 bg-[#12121A]/95 flex flex-col items-center justify-center p-8 text-center text-white">
+                  <span className="text-4xl mb-4">📷</span>
+                  <p className="font-bold text-sm leading-relaxed mb-6 max-w-sm text-[#8A8A9E]">
+                    {cameraPermissionError}
+                  </p>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-[#6B5E96] text-white font-black text-xs px-6 py-3 rounded-xl hover:opacity-90 transition-all shadow-md"
+                  >
+                    Select Photo File
+                  </button>
                 </div>
-                <span className="text-[10px] font-bold text-gray-500">{scan.label}</span>
+              )}
+
+              {streamActive && !cameraPermissionError && (
+                <>
+                  <div className="absolute inset-8 border-2 border-dashed border-white/25 rounded-[2rem] pointer-events-none" />
+                  <div className="absolute top-8 left-8 w-8 h-8 border-t-4 border-l-4 border-[#6B5E96] rounded-tl-2xl pointer-events-none" />
+                  <div className="absolute top-8 right-8 w-8 h-8 border-t-4 border-r-4 border-[#6B5E96] rounded-tr-2xl pointer-events-none" />
+                  <div className="absolute bottom-8 left-8 w-8 h-8 border-b-4 border-l-4 border-[#6B5E96] rounded-bl-2xl pointer-events-none" />
+                  <div className="absolute bottom-8 right-8 w-8 h-8 border-b-4 border-r-4 border-[#6B5E96] rounded-br-2xl pointer-events-none" />
+                </>
+              )}
+            </div>
+          )}
+
+          {scanError && (
+            <div className="w-full max-w-lg mt-4 bg-red-950/40 border border-red-800/30 text-red-300 p-4 rounded-2xl text-xs font-bold leading-tight">
+              ⚠️ Vision pipeline error: {scanError}
+            </div>
+          )}
+
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+
+          {!scanLoading && (
+            <div className="flex items-center gap-6 mt-6">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-lg shadow-md hover:scale-105 transition-transform"
+                title="Upload Photo File"
+              >
+                🖼️
               </button>
-            ))}
-          </div>
+              <button
+                disabled={!streamActive}
+                onClick={captureFrame}
+                className="w-20 h-20 rounded-full bg-white border-4 border-white/20 flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
+              >
+                <div className="w-14 h-14 rounded-full bg-[#E92A43]" />
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-lg shadow-md hover:scale-105 transition-transform"
+              >
+                🔄
+              </button>
+            </div>
+          )}
+          <p className="text-[11px] font-bold text-gray-500 mt-4 tracking-wider uppercase">
+            No Mock Data: Sourced dynamically using Google Gemini + Real FAO/WAFCT Data
+          </p>
         </div>
       </div>
     </div>
