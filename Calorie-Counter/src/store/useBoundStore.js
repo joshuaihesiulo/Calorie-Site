@@ -83,127 +83,30 @@ export const useBoundStore = create((set, get) => ({
     return { isRegistered, isAuthenticated };
   },
 
-  analyzeFoodImage: async (base64Image) => {
-    set({ scanLoading: true, scanError: null, capturedImageSrc: base64Image });
-
-    const geminiToken = get().geminiToken;
-    if (!geminiToken) {
-      set({ scanLoading: false, scanError: "Gemini API key required! Add it in the top header." });
-      return;
+  // useBoundStore.js — replace analyzeFoodImage entirely, delete the GoogleGenerativeAI import and faoLookup import
+analyzeFoodImage: async (base64Image) => {
+  set({ scanLoading: true, scanError: null, capturedImageSrc: base64Image });
+  try {
+    const res = await fetch('http://localhost:8000/api/analyze-plate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64Image }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Analysis failed');
     }
-
-    try {
-      const genAI = new GoogleGenerativeAI(geminiToken);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
-
-      const matches = base64Image.match(/^data:(image\/\w+);base64,(.+)$/);
-      const mimeType = matches ? matches[1] : "image/jpeg";
-      const rawBase64 = matches ? matches[2] : base64Image;
-
-      // STEP A — Gemini identifies EVERY distinct dish visible, not just one.
-      const identifyPrompt = `Look at this plate of Nigerian/West African food carefully.
-      List EVERY visually distinct dish on the plate separately — do not merge them into one.
-      For example, if you see a swallow (amala, eba, pounded yam, etc.) served with a soup (egusi, ewedu, ogbono, etc.), list them as TWO separate dishes, not one.
-
-      For each dish, use one of these exact keys if it matches: jollof_rice, egusi_soup, pounded_yam, amala, fried_plantain, moin_moin.
-      If a dish doesn't match any of those, give your best plain lowercase dish name with underscores instead (e.g. "ewedu_soup").
-
-      Return ONLY raw JSON, no markdown, no backticks, in this exact shape:
-      {
-        "dishes": [
-          { "dishKey": "amala", "displayName": "Amala", "estimatedGrams": 200 },
-          { "dishKey": "egusi_soup", "displayName": "Egusi Soup", "estimatedGrams": 300 }
-        ]
-      }`;
-
-     const result = await generateWithRetry(model, [identifyPrompt, { inlineData: { mimeType, data: rawBase64 } }]);
-
-      const cleanJson = result.response.text().replace(/```json|```/gi, "").trim();
-      const identified = JSON.parse(cleanJson);
-
-      const detectedDishes = identified.dishes && identified.dishes.length > 0
-        ? identified.dishes
-        : [];
-
-      if (detectedDishes.length === 0) {
-        throw new Error("No dishes could be identified in this image. Try a clearer photo.");
-      }
-
-      // STEP B — Look up real FAO/WAFCT data for EACH detected dish locally.
-      const resolvedDishes = [];
-      const unresolvedDishNames = [];
-
-      for (const dish of detectedDishes) {
-        const faoData = faoLookup(dish.dishKey);
-        if (!faoData) {
-          unresolvedDishNames.push(dish.displayName);
-          continue;
-        }
-        const nutrients = faoData.source === 'dish_mapping' ? faoData : faoData.matches[0];
-        resolvedDishes.push({
-          displayName: dish.displayName,
-          grams: dish.estimatedGrams || 200,
-          nutrients
-        });
-      }
-
-      if (resolvedDishes.length === 0) {
-        throw new Error(`No FAO data found for: ${unresolvedDishNames.join(', ')}. These dishes may not be mapped yet.`);
-      }
-
-      // STEP C — Combine all resolved dishes into one plate total.
-      let totalGrams = 0;
-      let totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
-      for (const d of resolvedDishes) {
-        const factor = d.grams / 100;
-        totals.calories += (d.nutrients.calories_per_100g || 0) * factor;
-        totals.protein += (d.nutrients.protein_per_100g || 0) * factor;
-        totals.carbs += (d.nutrients.carbs_per_100g || 0) * factor;
-        totals.fat += (d.nutrients.fat_per_100g || 0) * factor;
-        totalGrams += d.grams;
-      }
-
-      const combinedName = resolvedDishes.map(d => d.displayName).join(' & ');
-      const per100gFactor = 100 / totalGrams;
-
-      const combinedBaseCaloriesPer100g = totals.calories * per100gFactor;
-      const combinedProteinPer100g = totals.protein * per100gFactor;
-      const combinedCarbsPer100g = totals.carbs * per100gFactor;
-      const combinedFatPer100g = totals.fat * per100gFactor;
-
-      set({
-        scanLoading: false,
-        currentView: 'result',
-        scannedFoodData: {
-          name: combinedName,
-          detectedDishes: resolvedDishes.map(d => ({ name: d.displayName, grams: d.grams })),
-          unresolvedDishNames,
-          baseCaloriesPer100g: combinedBaseCaloriesPer100g,
-          proteinPer100g: combinedProteinPer100g,
-          carbsPer100g: combinedCarbsPer100g,
-          fatPer100g: combinedFatPer100g,
-          units: [
-            { key: "standard_plate", label: "Standard plate portion", grams: totalGrams },
-            { key: "small_portion", label: "Small portion", grams: Math.round(totalGrams * 0.6) },
-            { key: "large_portion", label: "Large portion", grams: Math.round(totalGrams * 1.4) }
-          ],
-          supportsRawState: false,
-          customPrompts: [],
-          selectedUnitKey: "standard_plate",
-          selectedQuantity: 1,
-          computedGrams: totalGrams,
-          computedCalories: Math.round(totals.calories),
-          isRawState: false,
-          promptResponses: {}
-        },
-        scannedCount: get().scannedCount + 1
-      });
-
-    } catch (err) {
-      console.error("Pipeline Error:", err);
-      set({ scanLoading: false, scanError: err.message || "An issue occurred during analysis." });
-    }
-  },
+    const data = await res.json();
+    set({
+      scanLoading: false,
+      currentView: 'result',
+      scannedFoodData: { ...data, isRawState: false, promptResponses: {} },
+      scannedCount: get().scannedCount + 1,
+    });
+  } catch (err) {
+    set({ scanLoading: false, scanError: err.message || 'An issue occurred during analysis.' });
+  }
+},
 
   updateResultModifiers: (updates) => {
     set((state) => {
