@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Secrets — NEVER commit
+.env
+
 # Python
 backend/.venv
 __pycache__/
