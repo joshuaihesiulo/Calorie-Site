@@ -1,4 +1,3 @@
-import React from 'react';
 import { useBoundStore } from '../store/useBoundStore';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

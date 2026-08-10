@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { useBoundStore } from '../store/useBoundStore';
 import { REAL_FOOD_IMAGES } from '../constants/images';
 

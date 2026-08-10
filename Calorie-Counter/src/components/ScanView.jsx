@@ -1,12 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useBoundStore } from '../store/useBoundStore';
+import { compressImageToJpeg } from '../utils/imageCompression';
 
 export default function ScanView() {
   const setView = useBoundStore((state) => state.setView);
   const analyzeFoodImage = useBoundStore((state) => state.analyzeFoodImage);
   const scanLoading = useBoundStore((state) => state.scanLoading);
   const scanError = useBoundStore((state) => state.scanError);
-  const geminiToken = useBoundStore((state) => state.geminiToken);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -46,7 +46,7 @@ export default function ScanView() {
     };
   }, []);
 
-  const captureFrame = () => {
+  const captureFrame = async () => {
     if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -56,21 +56,23 @@ export default function ScanView() {
     canvas.height = video.videoHeight || 480;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const base64Data = canvas.toDataURL('image/jpeg', 0.9);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    if (!blob) return;
+    const base64Data = await compressImageToJpeg(blob);
     analyzeFoodImage(base64Data);
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        analyzeFoodImage(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const base64Data = await compressImageToJpeg(file);
+      analyzeFoodImage(base64Data);
+    } catch (err) {
+      console.error('Image compression failed:', err);
+    }
   };
 
   return (
@@ -89,12 +91,6 @@ export default function ScanView() {
           Close
         </button>
       </div>
-
-      {!geminiToken && (
-        <div className="bg-amber-950/40 border-b border-amber-800/30 text-amber-300 px-6 py-3 text-xs font-bold flex items-center justify-between z-10">
-          <span>⚠️ Gemini API key required. Input your key into the top header to enable live inference.</span>
-        </div>
-      )}
 
       <div className="flex flex-col lg:flex-row flex-1 z-10">
         <div className="flex-1 flex flex-col items-center justify-center p-6">

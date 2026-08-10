@@ -1,5 +1,14 @@
-import React from 'react';
-import { useBoundStore } from '../store/useBoundStore';
+import { useBoundStore, plateTotals, primaryDishName } from '../store/useBoundStore';
+
+const RESOLUTION_LABELS = {
+  direct: 'Direct',
+  fuzzy: 'Fuzzy',
+  ai_reclassify: 'AI',
+};
+
+function humanize(key) {
+  return String(key).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export default function ScanResultView() {
   const scannedFoodData = useBoundStore((state) => state.scannedFoodData);
@@ -17,36 +26,27 @@ export default function ScanResultView() {
     );
   }
 
-  const {
-    name,
-    computedCalories,
-    computedGrams,
-    selectedUnitKey,
-    selectedQuantity,
-    units,
-    isRawState,
-    supportsRawState,
-    customPrompts,
-    promptResponses,
-    proteinPer100g,
-    carbsPer100g,
-    fatPer100g,
-    detectedDishes,
-    unresolvedDishNames
-  } = scannedFoodData;
+  const dishes = scannedFoodData.dishes || [];
+  const totals = scannedFoodData.totals || {};
+  const unresolvedDishes = scannedFoodData.unresolvedDishes || [];
+  const selectedQuantity = Number(scannedFoodData.selectedQuantity) || 1;
 
-  const adjustedProtein = ((computedGrams / 100) * (proteinPer100g || 0)).toFixed(1);
-  const adjustedCarbs = ((computedGrams / 100) * (carbsPer100g || 0)).toFixed(1);
-  const adjustedFat = ((computedGrams / 100) * (fatPer100g || 0)).toFixed(1);
+  const name = primaryDishName(scannedFoodData);
+  const computed = plateTotals(scannedFoodData);
 
-  const handlePromptChange = (promptId, value) => {
-    updateResultModifiers({
-      promptResponses: {
-        ...promptResponses,
-        [promptId]: value
-      }
-    });
-  };
+  const adjustedProtein = ((totals.proteinG || 0) * selectedQuantity).toFixed(1);
+  const adjustedCarbs = ((totals.carbsG || 0) * selectedQuantity).toFixed(1);
+  const adjustedFat = ((totals.fatG || 0) * selectedQuantity).toFixed(1);
+
+  const scaledDishes = dishes.map((dish) => {
+    const grams = (Number(dish.estimatedGrams) || 0) * selectedQuantity;
+    const per100 = Number(dish.faoResult?.calories_per_100g) || 0;
+    return {
+      ...dish,
+      grams,
+      calories: Math.round((grams / 100) * per100),
+    };
+  });
 
   return (
     <div className="flex flex-col min-h-[85vh] lg:min-h-[75vh] bg-[#05050A] text-[#E2E2E9] relative overflow-hidden">
@@ -66,29 +66,29 @@ export default function ScanResultView() {
         <div className="flex-1 p-5 lg:p-8 flex flex-col justify-between border-r border-white/5 overflow-y-auto">
           <div className="bg-[#12121A] rounded-[2.5rem] p-6 lg:p-8 border border-white/5 relative">
             <div className="flex items-start justify-between mb-6">
-              <div>
+              <div className="min-w-0">
                 <span className="text-xs font-black text-[#8A8A9E] uppercase block mb-1">Dynamically Sourced (FAO WAFCT)</span>
-                <h2 className="text-2xl font-black tracking-tight text-[#00F090] mb-2">{name}</h2>
+                <h2 className="text-2xl font-black tracking-tight text-[#00F090] mb-2 truncate">{name}</h2>
 
-                {detectedDishes && detectedDishes.length > 1 && (
+                {scaledDishes.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    {detectedDishes.map((d, i) => (
+                    {scaledDishes.map((d, i) => (
                       <span key={i} className="bg-white/5 border border-white/10 text-[#8A8A9E] text-[10px] font-bold px-2.5 py-1 rounded-full">
-                        {d.name} · {d.grams}g
+                        {d.displayName || d.dishKey} · {Math.round(d.grams)}g
                       </span>
                     ))}
                   </div>
                 )}
 
                 <div className="flex items-baseline gap-1">
-                  <span className="text-6xl font-black tracking-tighter text-white">{computedCalories}</span>
+                  <span className="text-6xl font-black tracking-tighter text-white">{computed.calories}</span>
                   <span className="text-lg font-black text-[#8A8A9E]">Kcal</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Calculated Weight: <strong className="text-white">{computedGrams}g</strong></p>
+                <p className="text-xs text-gray-500 mt-1">Calculated Weight: <strong className="text-white">{computed.grams}g</strong></p>
 
-                {unresolvedDishNames && unresolvedDishNames.length > 0 && (
+                {unresolvedDishes.length > 0 && (
                   <p className="text-[10px] text-amber-400 font-bold mt-2">
-                    ⚠️ Not counted (no FAO data yet): {unresolvedDishNames.join(', ')}
+                    ⚠️ Not counted (no FAO data yet): {unresolvedDishes.map(humanize).join(', ')}
                   </p>
                 )}
               </div>
@@ -102,75 +102,40 @@ export default function ScanResultView() {
 
             <div className="space-y-4">
               <div className="bg-[#1A1A26] rounded-2xl p-4 border border-white/5 shadow-sm">
-                <span className="text-xs font-bold text-[#8A8A9E] block mb-2">Measure Unit on Plate:</span>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <select
-                    value={selectedUnitKey}
-                    onChange={(e) => updateResultModifiers({ selectedUnitKey: e.target.value })}
-                    className="flex-1 bg-black/40 text-white text-xs font-bold border border-white/10 rounded-xl px-3 py-2.5 focus:outline-none"
-                  >
-                    {units.map((unit) => (
-                      <option key={unit.key} value={unit.key} className="bg-[#12121A]">{unit.label} ({unit.grams}g)</option>
-                    ))}
-                  </select>
-
-                  <div className="flex items-center justify-between bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 min-w-[120px]">
-                    <button
-                      onClick={() => updateResultModifiers({ selectedQuantity: Math.max(0.5, selectedQuantity - 0.5) })}
-                      className="w-8 h-8 rounded-full bg-white/5 font-black text-sm flex items-center justify-center hover:bg-white/10"
-                    >
-                      -
-                    </button>
-                    <span className="font-mono text-xs font-bold text-white">{selectedQuantity}</span>
-                    <button
-                      onClick={() => updateResultModifiers({ selectedQuantity: selectedQuantity + 0.5 })}
-                      className="w-8 h-8 rounded-full bg-white/5 font-black text-sm flex items-center justify-center hover:bg-white/10"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {supportsRawState && (
-                <div className="flex items-center justify-between bg-[#1A1A26] rounded-2xl p-4 border border-white/5 shadow-sm">
-                  <div>
-                    <span className="text-xs font-bold block text-white">Measured raw before boiling?</span>
-                    <span className="text-[10px] text-[#8A8A9E] block font-semibold">Auto-applies conversion kinetics</span>
-                  </div>
+                <span className="text-xs font-bold text-[#8A8A9E] block mb-2">Plate Quantity:</span>
+                <div className="flex items-center justify-between bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 min-w-[120px]">
                   <button
-                    onClick={() => updateResultModifiers({ isRawState: !isRawState })}
-                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${isRawState ? 'bg-[#6B5E96] text-white' : 'bg-white/5 text-gray-500'}`}
+                    onClick={() => updateResultModifiers({ selectedQuantity: Math.max(0.5, selectedQuantity - 0.5) })}
+                    className="w-8 h-8 rounded-full bg-white/5 font-black text-sm flex items-center justify-center hover:bg-white/10"
                   >
-                    {isRawState ? 'RAW' : 'COOKED'}
+                    -
+                  </button>
+                  <span className="font-mono text-xs font-bold text-white">
+                    {selectedQuantity}x
+                  </span>
+                  <button
+                    onClick={() => updateResultModifiers({ selectedQuantity: selectedQuantity + 0.5 })}
+                    className="w-8 h-8 rounded-full bg-white/5 font-black text-sm flex items-center justify-center hover:bg-white/10"
+                  >
+                    +
                   </button>
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
-          {customPrompts.length > 0 && (
+          {scaledDishes.length > 1 && (
             <div className="mt-5 bg-[#12121A] rounded-[2.5rem] p-6 lg:p-8 border border-white/5 space-y-4">
-              <p className="text-xs font-black uppercase text-gray-500 tracking-wider">Plate Customizations &amp; Hidden Extras</p>
+              <p className="text-xs font-black uppercase text-gray-500 tracking-wider">Dish Breakdown</p>
 
-              <div className="space-y-4">
-                {customPrompts.map((p) => (
-                  <div key={p.id} className="flex flex-col gap-1">
-                    <label className="text-xs font-bold text-[#8A8A9E] capitalize">
-                      {p.label}: {p.type === 'range' && `(${promptResponses[p.id] || 0})`}
-                    </label>
-
-                    {p.type === 'range' && (
-                      <input
-                        type="range"
-                        min={p.min}
-                        max={p.max}
-                        step={p.step}
-                        value={promptResponses[p.id] || 0}
-                        onChange={(e) => handlePromptChange(p.id, Number(e.target.value))}
-                        className="w-full mt-1 accent-[#6B5E96]"
-                      />
-                    )}
+              <div className="space-y-3">
+                {scaledDishes.map((d, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-2xl px-4 py-3">
+                    <div className="min-w-0">
+                      <span className="text-sm font-black text-white block truncate">{d.displayName || d.dishKey}</span>
+                      <span className="text-[10px] font-bold text-[#8A8A9E]">{Math.round(d.grams)}g estimated · {RESOLUTION_LABELS[d.resolutionMethod] || d.resolutionMethod} match</span>
+                    </div>
+                    <span className="text-sm font-black text-[#00F090] flex-shrink-0">{d.calories} Kcal</span>
                   </div>
                 ))}
               </div>
@@ -195,7 +160,7 @@ export default function ScanResultView() {
                 <span className="text-[11px] font-bold text-gray-500 mt-1 block">Fat</span>
               </div>
               <div className="bg-[#1A1A26] rounded-2xl p-4 border border-white/5 text-center shadow-xs">
-                <span className="text-lg lg:text-xl font-black block leading-none text-[#00F090]">{computedGrams}g</span>
+                <span className="text-lg lg:text-xl font-black block leading-none text-[#00F090]">{computed.grams}g</span>
                 <span className="text-[11px] font-bold text-gray-400 mt-1 block">Total Weight</span>
               </div>
             </div>

@@ -1,5 +1,4 @@
-import React from 'react';
-import { REAL_FOOD_IMAGES } from '../constants/images';
+
 
 export default function ProblemSection() {
   return (

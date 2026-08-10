@@ -12,7 +12,7 @@ AI-powered calorie & macro tracker for Nigerian and West African dishes. Capture
 | **Build Tool** | Vite 8 |
 | **Styling** | Tailwind CSS v4 (`@tailwindcss/vite`) |
 | **State Management** | Zustand 5 |
-| **AI Vision** | Google Gemini API (`@google/generative-ai`) |
+| **AI Vision** | Google Gemini API (server-side pipeline in `backend/`) |
 | **Nutrition Database** | Local WAFCT JSON + ingredient-to-dish mapping |
 | **Linting** | ESLint 10 |
 | **Font** | Plus Jakarta Sans / Inter |
@@ -25,7 +25,7 @@ AI-powered calorie & macro tracker for Nigerian and West African dishes. Capture
 
 ```
 App.jsx
-├── Navbar.jsx                  — Top navigation, Gemini token input, auth entry
+├── Navbar.jsx                  — Top navigation, auth entry
 ├── [currentView === 'landing']
 │   ├── HeroSection.jsx         — Hero with CTA overlay buttons
 │   ├── ProblemSection.jsx      — Problem statement
@@ -61,20 +61,20 @@ currentView === 'dashboard'  → Personal food diary & daily log
 User captures/selects image
         │
         ▼
-ScanView.jsx — captures frame from camera or reads file via FileReader
-        │ (base64 JPEG)
+ScanView.jsx — captures frame from camera or reads a file, then compresses
+        │ (base64 JPEG, max 768px @ quality 0.7)
         ▼
 useBoundStore.analyzeFoodImage()
-        │
-        ├─ Step A — Gemini Vision identifies EVERY distinct dish
+        │ (POST /api/analyze-plate)
+        ▼
+FastAPI backend — Gemini vision identifies EVERY distinct dish
         │   Returns JSON array: [{ dishKey, displayName, estimatedGrams }, ...]
-        │   Uses exponential-backoff retry (3 attempts) for 503 errors
         │
-        ├─ Step B — faoLookup(dishKey) resolves each dish locally
+        ├─ LangGraph resolution engine maps each dish to FAO/WAFCT data
         │   ├─ dish_ingredients.json → sum individual ingredient nutrients
-        │   └─ fao_wafct.json        → direct WAFCT match fallback
+        │   └─ fao_wafct.json        → direct WAFCT match, fuzzy, then Groq AI
         │
-        └─ Step C — Aggregate totals across all dishes
+        └─ Response: { dishes, totals, unresolvedDishes, logs } → ScanResultView
 ```
 
 ### Multi-Dish Detection
@@ -84,8 +84,9 @@ The prompt instructs Gemini to **never merge dishes**. Swallow + soup = two sepa
 ### Fallback & Resilience
 
 - Gemini API 503 errors are retried with exponential backoff (1s, 2s, 4s)
-- Unrecognised dishes are reported to the user but don't block the pipeline
-- Missing API key is detected before any network call
+- Unmatched dishes are reported to the user (`unresolvedDishes`) but don't block the pipeline
+- Images are resized to 768px JPEG 0.7 before upload to cut latency and cost
+- Missing API key is detected on the backend before any network call
 
 ---
 
@@ -99,11 +100,11 @@ The prompt instructs Gemini to **never merge dishes**. Swallow + soup = two sepa
 | **Auth** | `isAuthenticated`, `user`, `geminiToken` | Session & credentials |
 | **Scanner** | `scanLoading`, `scanError`, `capturedImageSrc`, `scannedFoodData` | Scan pipeline state |
 | **Food Diary** | `loggedMeals` | Committed meal log |
-| **Modifiers** | `selectedUnitKey`, `selectedQuantity`, `isRawState`, `promptResponses` | Portion & customisation controls |
+| **Modifiers** | `selectedQuantity` (plate multiplier) | Portion scaling on scan results |
 
 ### Key Methods
 
-- `analyzeFoodImage(base64)` — Full Gemini → FAO pipeline
+- `analyzeFoodImage(base64)` — POSTs the image to the backend pipeline (Gemini → FAO)
 - `updateResultModifiers(updates)` — Recalculate calories when portion changes
 - `commitScannedMeal()` — Move scan result into `loggedMeals`, navigate to dashboard
 - `signup(name, email)` / `signin(email)` / `signout()` — LocalStorage-based auth
@@ -174,7 +175,8 @@ npm run lint
 
 ### Environment Variables
 
-No `.env` required. The Gemini API key is entered directly in the navbar input field and persisted to `localStorage` under `NaijaCounts_gemini_Token`.
+The frontend needs no `.env` — AI keys live on the backend only (`backend/.env`):
+`GEMINI_API_KEY` (vision) and `GROQ_API_KEY` (dish reclassification).
 
 ---
 
@@ -206,10 +208,21 @@ Calorie-Counter/
 │   ├── store/
 │   │   └── useBoundStore.js    — Zustand store (state, auth, scan pipeline)
 │   ├── utils/
-│   │   └── faoLookup.js        — FAO/WAFCT nutrient lookup utility
+│   │   └── imageCompression.js — Client-side resize to 768px JPEG 0.7 before upload
 │   ├── data/
 │   │   ├── fao_wafct.json      — West African Food Composition Table
 │   │   └── dish_ingredients.json — Dish-to-ingredient mapping
 │   └── constants/
 │       └── images.js           — External image URL constants
+```
+
+## Backend
+
+FastAPI service in `backend/` — owns the Gemini vision call, the LangGraph dish-resolution engine, and all AI keys. Run it alongside the frontend:
+
+```bash
+cd backend
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt   # or double-click start-server.cmd after install
+start-server.cmd
 ```

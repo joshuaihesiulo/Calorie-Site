@@ -1,29 +1,25 @@
 import { create } from 'zustand';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { faoLookup } from '../utils/faoLookup';
 
-// Add this helper function near the top of useBoundStore.js, above the store definition:
-
-async function generateWithRetry(model, promptParts, maxRetries = 3) {
-  let lastError;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await model.generateContent(promptParts);
-    } catch (err) {
-      lastError = err;
-      const is503 = err.message?.includes('503') || err.message?.includes('overloaded') || err.message?.includes('high demand');
-      if (!is503 || attempt === maxRetries) {
-        throw err; // not a 503, or we've used up retries — fail for real
-      }
-      // Exponential backoff: wait 1s, then 2s, then 4s before retrying
-      const waitMs = 1000 * Math.pow(2, attempt);
-      await new Promise(resolve => setTimeout(resolve, waitMs));
-    }
-  }
-  throw lastError;
+export function plateTotals(data) {
+  const quantity = Number(data?.selectedQuantity) || 1;
+  const rawGrams = (data?.dishes || []).reduce(
+    (acc, dish) => acc + (Number(dish.estimatedGrams) || 0),
+    0
+  );
+  const rawCalories = Number(data?.totals?.calories) || 0;
+  return {
+    quantity,
+    calories: Math.round(rawCalories * quantity),
+    grams: Math.round(rawGrams * quantity),
+  };
 }
 
-
+export function primaryDishName(data) {
+  const dishes = data?.dishes || [];
+  if (!dishes.length) return 'Plate scan';
+  const primary = [...dishes].sort((a, b) => (Number(b.estimatedGrams) || 0) - (Number(a.estimatedGrams) || 0))[0];
+  return primary.displayName || primary.dishKey || 'Plate scan';
+}
 
 export const useBoundStore = create((set, get) => ({
   waitlistOpen: false,
@@ -32,8 +28,6 @@ export const useBoundStore = create((set, get) => ({
   isScanning: false,
   currentView: 'landing',
 
-  // Credentials and Security state parameters (stored locally)
-  geminiToken: localStorage.getItem('NaijaCounts_gemini_Token') || '',
   isAuthenticated: false,
   user: null,
 
@@ -48,10 +42,6 @@ export const useBoundStore = create((set, get) => ({
 
   toggleWaitlist: () => set((state) => ({ waitlistOpen: !state.waitlistOpen })),
   setView: (view) => set({ currentView: view }),
-  setgeminiToken: (token) => {
-    localStorage.setItem('NaijaCounts_gemini_Token', token);
-    set({ geminiToken: token });
-  },
 
   signup: (name, email) => {
     const user = { name, email };
@@ -60,7 +50,7 @@ export const useBoundStore = create((set, get) => ({
     set({ isAuthenticated: true, user, currentView: 'dashboard' });
   },
 
-  signin: (email) => {
+  signin: () => {
     const storedUser = JSON.parse(localStorage.getItem('naija_user') || 'null');
     if (!storedUser) return;
     localStorage.setItem('naija_token', 'session_active');
@@ -83,60 +73,51 @@ export const useBoundStore = create((set, get) => ({
     return { isRegistered, isAuthenticated };
   },
 
-  // useBoundStore.js — replace analyzeFoodImage entirely, delete the GoogleGenerativeAI import and faoLookup import
-analyzeFoodImage: async (base64Image) => {
-  set({ scanLoading: true, scanError: null, capturedImageSrc: base64Image });
-  try {
-    const res = await fetch('http://localhost:8000/api/analyze-plate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: base64Image }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'Analysis failed');
+  analyzeFoodImage: async (base64Image) => {
+    set({ scanLoading: true, scanError: null, capturedImageSrc: base64Image });
+    try {
+      const res = await fetch('http://localhost:8000/api/analyze-plate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Image }),
+      });
+      if (!res.ok) {
+        let message = 'Analysis failed';
+        try {
+          message = (await res.json()).detail || message;
+        } catch {
+          // non-JSON error body — keep the default message
+        }
+        throw new Error(message);
+      }
+      const data = (await res.json()) || {};
+      set({
+        scanLoading: false,
+        currentView: 'result',
+        scannedFoodData: { ...data, selectedQuantity: 1 },
+        scannedCount: get().scannedCount + 1,
+      });
+    } catch (err) {
+      const isNetworkError =
+        !(err instanceof Error) || err.name === 'TypeError' || /failed to fetch|network/i.test(err.message || '');
+      set({
+        scanLoading: false,
+        scanError: isNetworkError
+          ? 'Cannot reach the analysis server at http://localhost:8000. Start it with: cd backend && start-server.cmd'
+          : err.message || 'An issue occurred during analysis.',
+      });
     }
-    const data = await res.json();
-    set({
-      scanLoading: false,
-      currentView: 'result',
-      scannedFoodData: { ...data, isRawState: false, promptResponses: {} },
-      scannedCount: get().scannedCount + 1,
-    });
-  } catch (err) {
-    set({ scanLoading: false, scanError: err.message || 'An issue occurred during analysis.' });
-  }
-},
+  },
 
   updateResultModifiers: (updates) => {
     set((state) => {
       if (!state.scannedFoodData) return state;
       const updatedData = { ...state.scannedFoodData, ...updates };
-
-      const matchedUnit = updatedData.units.find(u => u.key === updatedData.selectedUnitKey) || { grams: 100 };
-      let calculatedBaseGrams = matchedUnit.grams * updatedData.selectedQuantity;
-
-      if (updatedData.isRawState && updatedData.supportsRawState) {
-        calculatedBaseGrams *= 3.0;
-      }
-
-      let totalCalories = (calculatedBaseGrams / 100) * updatedData.baseCaloriesPer100g;
-
-      if (updatedData.customPrompts) {
-        updatedData.customPrompts.forEach((prompt) => {
-          const userVal = updatedData.promptResponses[prompt.id] || 0;
-          if (prompt.type === 'range' && prompt.caloriesPerUnit) {
-            totalCalories += (userVal * prompt.caloriesPerUnit);
-          }
-        });
-      }
-
       return {
         scannedFoodData: {
           ...updatedData,
-          computedGrams: Math.round(calculatedBaseGrams),
-          computedCalories: Math.round(totalCalories)
-        }
+          ...plateTotals(updatedData),
+        },
       };
     });
   },
@@ -144,11 +125,12 @@ analyzeFoodImage: async (base64Image) => {
   commitScannedMeal: () => {
     const meal = get().scannedFoodData;
     if (!meal) return;
+    const computed = plateTotals(meal);
     const newLoggedItem = {
       id: Date.now(),
-      name: meal.name,
-      calories: meal.computedCalories,
-      grams: meal.computedGrams,
+      name: primaryDishName(meal),
+      calories: computed.calories,
+      grams: computed.grams,
       date: `Today, ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
     };
     set((state) => ({

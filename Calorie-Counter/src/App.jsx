@@ -1,4 +1,3 @@
-import React from 'react';
 import Navbar from './components/Navbar';
 import HeroSection from './views/HeroSection';
 import ProblemSection from './views/ProblemSection';

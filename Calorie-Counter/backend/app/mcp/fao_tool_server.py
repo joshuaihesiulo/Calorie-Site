@@ -1,8 +1,8 @@
 """Stage 6 — MCP tool server exposing FAO/WAFCT lookups (optional).
 
-Scaffold only: safe to import without fastmcp installed. When run with
+Scaffold: safe to import without fastmcp installed. When run with
 ``python -m app.mcp.fao_tool_server``, starts an MCP server whose tools wrap
-the core ``fao_lookup`` service so agents/editors can query Nigerian food data.
+the ``fao_lookup`` service so agents/editors can query Nigerian food data.
 """
 
 from __future__ import annotations
@@ -19,14 +19,19 @@ def create_server() -> Any:
             "fastmcp is not installed. Add it to requirements.txt to use Stage 6."
         ) from exc
 
-    from app.services.fao_lookup import fao_lookup
+    from app.services.fao_lookup import get_all_known_keys, lookup_direct_fao
 
     server = FastMCP("fao-tool-server")
 
     @server.tool()
     def lookup_food(food_query: str) -> dict[str, Any] | None:
-        """Look up a Nigerian food/dish in the FAO/WAFCT database."""
-        return fao_lookup(food_query)
+        """Look up a Nigerian food/dish key in the FAO/WAFCT database."""
+        return lookup_direct_fao(food_query)
+
+    @server.tool()
+    def list_known_keys() -> list[str]:
+        """Return every known dish/food key the lookup layer can resolve."""
+        return get_all_known_keys()
 
     return server
 

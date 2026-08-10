@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,8 +20,12 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
 
     # Model identifiers
-    gemini_vision_model: str = "gemini-1.5-flash"
-    gemini_model: str = "gemini-3.5-flash"
+    # `gemini_model` is accepted as an alias so an existing GEMINI_MODEL env
+    # var drives the vision model too (GEMINI_VISION_MODEL wins if both set).
+    gemini_vision_model: str = Field(
+        default="gemini-3.6-flash",
+        validation_alias=AliasChoices("gemini_vision_model", "gemini_model"),
+    )
     groq_model: str = "llama-3.2-90b-vision-preview"
 
     # Logging
