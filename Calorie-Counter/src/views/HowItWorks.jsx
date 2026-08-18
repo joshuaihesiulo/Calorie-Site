@@ -12,7 +12,7 @@ export default function HowItWorks() {
   return (
     <section className="bg-[#FFF4CA]/30 py-24 px-6 relative overflow-hidden">
       <div className="max-w-3xl mx-auto text-center mb-16 relative z-10">
-        <h2 className="text-4xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter mb-4">
+        <h2 className="text-4xl md:text-5xl font-black text-[#2C3768] tracking-tighter mb-4">
           How NaijaCounts Works
         </h2>
         <p className="text-gray-500 font-bold text-xs uppercase tracking-wider">

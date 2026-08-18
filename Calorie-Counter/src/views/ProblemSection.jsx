@@ -10,7 +10,7 @@ export default function ProblemSection() {
           <span className="bg-[#E92A43] text-white text-xs font-black px-3 py-1 rounded-md tracking-wider uppercase">
             The Problem
           </span>
-          <h2 className="text-4xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter mt-4 mb-6 leading-none">
+          <h2 className="text-4xl md:text-5xl font-black text-[#2C3768] tracking-tighter mt-4 mb-6 leading-none">
             Eating, Simplified<br />Together.
           </h2>
           <p className="text-gray-500 max-w-md font-medium">

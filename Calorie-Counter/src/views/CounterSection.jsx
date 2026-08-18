@@ -11,7 +11,7 @@ export default function CounterSection() {
 
       {/* Massive Typography Backdrop */}
       <div className="w-full text-center select-none pointer-events-none absolute left-0 right-0 top-12">
-        <h2 className="text-[12rem] md:text-[22rem] font-black font-display text-[#E92A43] tracking-tighter leading-none opacity-90">
+        <h2 className="text-[12rem] md:text-[22rem] font-black text-[#E92A43] tracking-tighter leading-none opacity-90">
           Counter
         </h2>
       </div>

@@ -22,7 +22,7 @@ export default function HeroSection() {
 
         {/* Center Text Block Layout */}
         <div className="lg:col-span-6 text-center flex flex-col items-center">
-          <h1 className="text-5xl md:text-7xl font-black font-display text-[#2C3768] tracking-tighter leading-[0.95] mb-6">
+          <h1 className="text-5xl md:text-7xl font-black text-[#2C3768] tracking-tighter leading-[0.95] mb-6">
             Track Smarter.<br />Eat Naija.<br />Live Better.
           </h1>
           <p className="text-gray-600 text-base md:text-lg max-w-md mb-8 font-normal leading-relaxed">
