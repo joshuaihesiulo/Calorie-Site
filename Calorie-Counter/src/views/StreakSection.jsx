@@ -7,7 +7,7 @@ export default function StreakSection() {
         <span className="text-[#E92A43] text-xs font-black uppercase tracking-wider">
           Built for how Nigerians actually eat
         </span>
-        <h2 className="text-4xl md:text-5xl font-black text-[#2C3768] tracking-tighter mt-3">
+        <h2 className="text-4xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter mt-3">
           Scan meals, swap<br />smarter, keep your streak.
         </h2>
       </div>
