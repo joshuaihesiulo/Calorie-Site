@@ -26,3 +26,10 @@ app.include_router(analyze.router, prefix="/api")
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/health")
+async def api_health() -> dict[str, str]:
+    """Health check under the /api prefix — reachable on Vercel, where only
+    /api/* paths are routed to the Python function."""
+    return {"status": "ok"}

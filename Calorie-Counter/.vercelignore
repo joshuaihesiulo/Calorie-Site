@@ -1,0 +1,5 @@
+# Never upload local env files to Vercel builds.
+# Firebase web config is injected via Vercel Environment Variables instead.
+.env
+.env.*
+backend/.env

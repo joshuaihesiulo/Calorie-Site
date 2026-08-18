@@ -1,5 +1,0 @@
-{
-  "rootDirectory": "Calorie-Counter",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist"
-}

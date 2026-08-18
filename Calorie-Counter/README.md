@@ -13,6 +13,8 @@ AI-powered calorie & macro tracker for Nigerian and West African dishes. Capture
 | **Styling** | Tailwind CSS v4 (`@tailwindcss/vite`) |
 | **State Management** | Zustand 5 |
 | **AI Vision** | Google Gemini API (server-side pipeline in `backend/`) |
+| **Auth** | Firebase Authentication (email/password + Google) |
+| **Persistence** | Firebase Cloud Firestore (`userMeals/{uid}`) + localStorage fallback |
 | **Nutrition Database** | Local WAFCT JSON + ingredient-to-dish mapping |
 | **Linting** | ESLint 10 |
 | **Font** | Plus Jakarta Sans / Inter |
@@ -38,6 +40,7 @@ App.jsx
 ├── [currentView === 'scan']    → ScanView.jsx
 ├── [currentView === 'result']  → ScanResultView.jsx
 └── [currentView === 'dashboard'] → DailyDashboardView.jsx
+    └── MealModal.jsx           — Add/edit meal via catalog search or manual entry
 ```
 
 ### State-Driven Routing
@@ -97,9 +100,9 @@ The prompt instructs Gemini to **never merge dishes**. Swallow + soup = two sepa
 | Slice | State | Description |
 |---|---|---|
 | **UI** | `currentView`, `waitlistOpen`, `activeFoodTab` | View routing & modals |
-| **Auth** | `isAuthenticated`, `user`, `geminiToken` | Session & credentials |
+| **Auth** | `isAuthenticated`, `user`, `authLoading`, `authError` | Firebase session |
 | **Scanner** | `scanLoading`, `scanError`, `capturedImageSrc`, `scannedFoodData` | Scan pipeline state |
-| **Food Diary** | `loggedMeals` | Committed meal log |
+| **Food Diary** | `loggedMeals`, `lastCommittedMeal` | Committed meal log + last-scan shortcut |
 | **Modifiers** | `selectedQuantity` (plate multiplier) | Portion scaling on scan results |
 
 ### Key Methods
@@ -107,18 +110,41 @@ The prompt instructs Gemini to **never merge dishes**. Swallow + soup = two sepa
 - `analyzeFoodImage(base64)` — POSTs the image to the backend pipeline (Gemini → FAO)
 - `updateResultModifiers(updates)` — Recalculate calories when portion changes
 - `commitScannedMeal()` — Move scan result into `loggedMeals`, navigate to dashboard
-- `signup(name, email)` / `signin(email)` / `signout()` — LocalStorage-based auth
+- `addManualMeal(name, calories, grams)` / `updateMeal(id, updates)` / `deleteMeal(id)` — Food diary CRUD
+- `addAnotherServing()` — Re-log the last committed meal (one-tap second helping)
+- `signup(name, email, password)` / `signin(email, password)` / `signinWithGoogle()` / `signout()` — Firebase auth
+- `computeStreak(loggedMeals)` — Consecutive-day logging streak (alive while today *or* yesterday is logged)
+
+### Meal Shape & Persistence
+
+Each meal is stored as:
+
+```js
+{ id, name, calories, grams, dateKey: 'YYYY-MM-DD', createdAt: ISO, date: 'Today, 1:30 PM' }
+```
+
+Every mutation writes to `localStorage` immediately and syncs to the user's
+Firestore document (`userMeals/{uid}`) when signed in. If Firestore is
+unavailable (rules not deployed, offline), the app silently keeps using
+localStorage — nothing breaks.
 
 ---
 
 ## Authentication Flow
 
-Auth is **client-side only** using `localStorage`:
+Auth is handled by **Firebase Authentication**:
 
-1. **SignUp** — Stores `{ name, email }` as `naija_user`, sets `naija_token` → navigates to dashboard
-2. **SignIn** — Reads stored user, validates email match, sets token
-3. **SignOut** — Clears token, returns to landing
-4. **My Portal button** — Calls `checkAuth()` to route to signup/signin/dashboard
+1. **SignUp** — Creates an email/password account (with name), signs in, routes to dashboard
+2. **SignIn** — Firebase sign-in for existing accounts, or **Google** one-tap
+3. **SignOut** — Clears session and returns to landing
+4. **My Portal button** — Routes signed-in users straight to their dashboard; others to sign-in
+
+Firestore security rules (`firestore.rules`) lock `userMeals/{uid}` so only the
+owner can read/write their own diary document. Deploy them with the Firebase CLI:
+
+```bash
+firebase deploy --only firestore:rules
+```
 
 ---
 
@@ -134,11 +160,17 @@ Maps dish keys to ingredient lists with gram weights. Each ingredient resolves a
 
 The West African Food Composition Table as a flat JSON array of foods. Each entry contains calories, protein, carbs, fat, and fiber per 100g.
 
-### `src/utils/faoLookup.js`
+### `src/utils/foodCatalog.js`
 
-Two-tier lookup:
-1. **Dish mapping** — If `dish_ingredients.json` has the key, sum all ingredient nutrients
-2. **Direct WAFCT match** — Fall through to `fao_wafct.json` substring search
+Client-side searchable catalog for the "Add Meal" picker. Mirrors the backend's
+two-tier lookup:
+
+1. **Dish mapping** — `dish_ingredients.json` dish keys are pre-aggregated into
+   per-100g profiles (summing each ingredient against WAFCT).
+2. **Direct WAFCT match** — falls through to `fao_wafct.json` foods.
+
+Exports `searchFoods(query, limit)`, `getPer100(nameOrKey)`, and
+`caloriesForGrams(profile, grams)`.
 
 ---
 
@@ -147,7 +179,8 @@ Two-tier lookup:
 | Decision | Rationale |
 |---|---|
 | **State routing over React Router** | Simple app, 6 views, no URL-based requirements needed |
-| **LocalStorage auth** | No backend dependency; purely client-side prototype |
+| **Firebase Auth + Firestore, localStorage fallback** | Real accounts and cross-device sync without a custom backend; diary still works offline or if Firestore rules aren't deployed |
+| **Per-user single diary doc** | Bootcamp-scale traffic: one small document read/write per mutation, trivially covered by security rules |
 | **Local WAFCT JSON** | Zero-latency nutrition lookups; no API calls for food data |
 | **Multi-dish prompt** | Accurately represents Nigerian meals (swallow + soup combos) |
 | **Dark theme scanner** | Better contrast for camera viewfinder overlay |
@@ -160,8 +193,12 @@ Two-tier lookup:
 # Install dependencies
 npm install
 
-# Start dev server with HMR
-npm run dev
+# Start backend + frontend together (uvicorn in background, then Vite)
+npm run dev:all
+
+# Or run them separately
+npm run dev        # frontend only (Vite proxies /api to localhost:8000)
+start-server.cmd   # backend only (from backend/)
 
 # Build for production
 npm run build
@@ -172,6 +209,11 @@ npm run preview
 # Lint
 npm run lint
 ```
+
+The Vite dev server proxies `/api/*` requests to `http://localhost:8000`, so the
+frontend always talks to a single origin — the same `/api/analyze-plate` URL it
+uses in production. The Scan screen pings `/api/health` on load and shows a
+"Backend offline" chip (with a Retry button) if the backend isn't running.
 
 ### Environment Variables
 
@@ -192,12 +234,13 @@ Calorie-Counter/
 │   ├── App.jsx                 — Root component with state-driven routing
 │   ├── index.css               — Tailwind imports + custom animations
 │   ├── components/
-│   │   ├── Navbar.jsx          — Sticky nav, Gemini token input, auth button
+│   │   ├── Navbar.jsx          — Sticky nav, auth button
 │   │   ├── SignUpView.jsx      — Registration form with brand panel
 │   │   ├── SignInView.jsx      — Login form with brand panel
 │   │   ├── ScanView.jsx        — Camera feed + capture/upload UI
 │   │   ├── ScanResultView.jsx  — Scan result with macro breakdown
-│   │   └── DailyDashboardView.jsx — Food diary, weekly calendar, habit tracker
+│   │   ├── DailyDashboardView.jsx — Food diary, day selector, streak, habit tracker
+│   │   └── MealModal.jsx       — Add/edit meal (catalog search or manual entry)
 │   ├── views/
 │   │   ├── HeroSection.jsx     — Landing hero
 │   │   ├── ProblemSection.jsx  — Problem intro section
@@ -206,14 +249,21 @@ Calorie-Counter/
 │   │   ├── StreakSection.jsx   — Streak tracker section
 │   │   └── HowItWorks.jsx      — How it works section
 │   ├── store/
-│   │   └── useBoundStore.js    — Zustand store (state, auth, scan pipeline)
+│   │   └── useBoundStore.js    — Zustand store (state, auth, scan pipeline, diary)
+│   ├── firebase/
+│   │   ├── config.js           — Firebase app init
+│   │   ├── auth.js             — Email/password + Google auth helpers
+│   │   └── firestore.js        — userMeals load/save helpers
 │   ├── utils/
-│   │   └── imageCompression.js — Client-side resize to 768px JPEG 0.7 before upload
+│   │   ├── imageCompression.js — Client-side resize to 768px JPEG 0.7 before upload
+│   │   └── foodCatalog.js      — Searchable catalog for the manual add-meal picker
 │   ├── data/
 │   │   ├── fao_wafct.json      — West African Food Composition Table
 │   │   └── dish_ingredients.json — Dish-to-ingredient mapping
 │   └── constants/
 │       └── images.js           — External image URL constants
+├── firestore.rules            — Per-user diary document security rules
+└── index.html
 ```
 
 ## Backend
@@ -226,3 +276,37 @@ python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt   # or double-click start-server.cmd after install
 start-server.cmd
 ```
+
+### Deploying to Vercel (production)
+
+The repo deploys as a single Vercel project with one URL: the React build is
+served statically and the FastAPI backend runs as a Python function
+(`api/index.py`), so `/api/*` requests hit the same domain as the site — no
+CORS, no separate backend host, no keep-alive services.
+
+1. **Set env vars in Vercel** (Project → Settings → Environment Variables):
+   - `GEMINI_API_KEY` — Google Gemini vision key
+   - `GROQ_API_KEY` — Groq key (dish reclassification; optional, degrades gracefully)
+2. **Point the frontend at your Firebase project** — `src/firebase/config.js`
+   reads the Firebase SDK config from the `VITE_FIREBASE_*` env vars; set them
+   in Vercel and locally in a `.env` file (not committed).
+3. **Deploy Firestore rules** (once, from the repo root):
+   ```bash
+   firebase init firestore   # first time only — accept default rules file
+   firebase deploy --only firestore:rules
+   ```
+4. **Deploy** (from the repo root):
+   ```bash
+   vercel --prod
+   ```
+   `vercel.json` already configures `rootDirectory: Calorie-Counter`,
+   `buildCommand: npm run build`, `outputDirectory: dist`, and a 60s
+   `maxDuration` for the Python function.
+
+Notes:
+- The Gemini SDK and LangGraph are lazy-imported on first request, keeping
+  cold starts ~1–2s after idle (Hobby tier reuses warm instances for a few
+  minutes between scans).
+- Scans take ~3–10s once warm; Hobby-tier limit is 60s per invocation and
+  ~1M invocations/month free.
+- API keys live only in Vercel env vars — `backend/.env` is git-ignored.

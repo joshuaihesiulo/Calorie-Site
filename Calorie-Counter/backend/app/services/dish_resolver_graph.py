@@ -16,7 +16,6 @@ from __future__ import annotations
 import logging
 from typing import Any, TypedDict
 
-from langgraph.graph import END, START, StateGraph
 from rapidfuzz import fuzz, process
 
 from app.services import providers
@@ -239,6 +238,10 @@ def aggregate_nutrients(state: PlateState) -> dict[str, Any]:
 # Graph assembly
 # ---------------------------------------------------------------------------
 def build_plate_resolution_graph():
+    # Lazy import: langgraph is heavy to load, so the graph is only built on
+    # the first scan request (keeps serverless cold starts fast).
+    from langgraph.graph import END, START, StateGraph
+
     graph = StateGraph(PlateState)
     graph.add_node("check_fao_match", check_fao_match)
     graph.add_node("fuzzy_match_dish", fuzzy_match_dish)
@@ -262,7 +265,15 @@ def build_plate_resolution_graph():
     return graph.compile()
 
 
-plate_resolution_graph = build_plate_resolution_graph()
+_plate_resolution_graph = None
+
+
+def get_plate_resolution_graph():
+    """Build the resolution graph once, lazily on first use."""
+    global _plate_resolution_graph
+    if _plate_resolution_graph is None:
+        _plate_resolution_graph = build_plate_resolution_graph()
+    return _plate_resolution_graph
 
 
 def run_dish_resolution_graph(dishes: list[dict]) -> dict:
@@ -280,4 +291,4 @@ def run_dish_resolution_graph(dishes: list[dict]) -> dict:
         "logs": [],
         "action": "",
     }
-    return plate_resolution_graph.invoke(state)
+    return get_plate_resolution_graph().invoke(state)

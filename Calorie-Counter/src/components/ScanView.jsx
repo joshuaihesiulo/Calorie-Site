@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useBoundStore } from '../store/useBoundStore';
 import { compressImageToJpeg } from '../utils/imageCompression';
+import { ArrowLeftIcon, CameraIcon, AlertIcon, ImageIcon, RefreshIcon } from './icons';
 
 export default function ScanView() {
   const setView = useBoundStore((state) => state.setView);
   const analyzeFoodImage = useBoundStore((state) => state.analyzeFoodImage);
+  const retryScan = useBoundStore((state) => state.retryScan);
+  const capturedImageSrc = useBoundStore((state) => state.capturedImageSrc);
   const scanLoading = useBoundStore((state) => state.scanLoading);
   const scanError = useBoundStore((state) => state.scanError);
 
@@ -14,6 +17,20 @@ export default function ScanView() {
 
   const [streamActive, setStreamActive] = useState(false);
   const [cameraPermissionError, setCameraPermissionError] = useState(null);
+  const [backendOnline, setBackendOnline] = useState(null);
+
+  const checkBackend = () => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    fetch('/api/health', { signal: controller.signal })
+      .then((res) => setBackendOnline(res.ok))
+      .catch(() => setBackendOnline(false))
+      .finally(() => clearTimeout(timer));
+  };
+
+  useEffect(() => {
+    checkBackend();
+  }, []);
 
   useEffect(() => {
     let activeStream = null;
@@ -82,8 +99,8 @@ export default function ScanView() {
 
       <div className="flex items-center justify-between p-5 lg:p-7 border-b border-white/5 z-10 backdrop-blur-md bg-black/40">
         <div className="flex items-center gap-2.5">
-          <button onClick={() => setView('dashboard')} className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-sm font-bold border border-white/10 transition-all text-white">
-            ←
+          <button onClick={() => setView('dashboard')} className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/10 transition-all text-white" aria-label="Back to dashboard">
+            <ArrowLeftIcon className="w-4 h-4" />
           </button>
           <span className="text-lg font-black tracking-tight">Scan Plate Visuals</span>
         </div>
@@ -108,7 +125,7 @@ export default function ScanView() {
 
               {cameraPermissionError && (
                 <div className="absolute inset-0 bg-[#12121A]/95 flex flex-col items-center justify-center p-8 text-center text-white">
-                  <span className="text-4xl mb-4">📷</span>
+                  <CameraIcon className="w-12 h-12 mb-4 text-[#8A8A9E]" />
                   <p className="font-bold text-sm leading-relaxed mb-6 max-w-sm text-[#8A8A9E]">
                     {cameraPermissionError}
                   </p>
@@ -135,7 +152,30 @@ export default function ScanView() {
 
           {scanError && (
             <div className="w-full max-w-lg mt-4 bg-red-950/40 border border-red-800/30 text-red-300 p-4 rounded-2xl text-xs font-bold leading-tight">
-              ⚠️ Vision pipeline error: {scanError}
+              <p className="flex items-start gap-2"><AlertIcon className="w-4 h-4 flex-shrink-0 mt-0.5" /> Vision pipeline error: {scanError}</p>
+              {capturedImageSrc && (
+                <button
+                  onClick={retryScan}
+                  className="mt-3 bg-red-800/60 hover:bg-red-700/60 text-red-100 font-black text-xs px-4 py-2 rounded-lg transition-all"
+                >
+                  Retry scan
+                </button>
+              )}
+            </div>
+          )}
+
+          {backendOnline === false && !scanLoading && (
+            <div className="w-full max-w-lg mt-4 bg-amber-950/40 border border-amber-800/30 text-amber-300 p-4 rounded-2xl text-xs font-bold leading-tight flex items-center justify-between gap-3">
+              <span className="flex items-start gap-2">
+                <AlertIcon className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                Backend offline — start it with <span className="font-mono">backend\start-server.cmd</span> or run <span className="font-mono">npm run dev:all</span>
+              </span>
+              <button
+                onClick={checkBackend}
+                className="shrink-0 bg-amber-800/60 hover:bg-amber-700/60 text-amber-100 font-black text-xs px-4 py-2 rounded-lg transition-all"
+              >
+                Retry
+              </button>
             </div>
           )}
 
@@ -148,7 +188,7 @@ export default function ScanView() {
                 className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-lg shadow-md hover:scale-105 transition-transform"
                 title="Upload Photo File"
               >
-                🖼️
+                <ImageIcon className="w-6 h-6" />
               </button>
               <button
                 disabled={!streamActive}
@@ -161,7 +201,7 @@ export default function ScanView() {
                 onClick={() => fileInputRef.current?.click()}
                 className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-lg shadow-md hover:scale-105 transition-transform"
               >
-                🔄
+                <RefreshIcon className="w-6 h-6" />
               </button>
             </div>
           )}

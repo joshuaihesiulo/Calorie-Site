@@ -14,8 +14,6 @@ import base64
 import json
 import re
 
-import google.generativeai as genai
-
 from app.config import get_settings
 from app.services.fao_lookup import get_all_known_keys
 
@@ -89,6 +87,11 @@ async def identify_dishes(image_base64: str) -> list[dict]:
     settings = get_settings()
     if not settings.gemini_api_key.strip():
         raise ValueError("GEMINI_API_KEY is missing from environment variables.")
+
+    # Lazy import: the Gemini SDK takes several seconds to import, so we only
+    # pay that cost on requests that actually need vision (keeps serverless
+    # cold starts ~1-2s instead of ~6-8s).
+    import google.generativeai as genai
 
     genai.configure(api_key=settings.gemini_api_key)
     model = genai.GenerativeModel(settings.gemini_vision_model)

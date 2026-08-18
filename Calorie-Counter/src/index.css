@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-family-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-display: 'Clash Display', 'Plus Jakarta Sans', 'Inter', sans-serif;
 }
 
 @keyframes fadeIn {

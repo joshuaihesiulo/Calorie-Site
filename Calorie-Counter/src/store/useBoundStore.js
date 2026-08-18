@@ -1,4 +1,12 @@
 import { create } from 'zustand';
+import {
+  signUpWithEmail,
+  signInWithEmail,
+  signInWithGoogle,
+  signOut as firebaseSignOut,
+  getAuthErrorMessage,
+} from '../firebase/auth';
+import { loadMealsFromFirestore, saveMealsToFirestore } from '../firebase/firestore';
 
 export function plateTotals(data) {
   const quantity = Number(data?.selectedQuantity) || 1;
@@ -21,6 +29,89 @@ export function primaryDishName(data) {
   return primary.displayName || primary.dishKey || 'Plate scan';
 }
 
+/* ---------------------------------------------------------------------------
+ * Meal helpers
+ * ------------------------------------------------------------------------- */
+
+const MEALS_STORAGE_KEY = (uid) => `naija_meals_${uid || 'guest'}`;
+
+function toDateKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function timeLabel(date) {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function uniqueId() {
+  return `m_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function buildMeal({ name, calories, grams, createdAt }) {
+  const created = createdAt ? new Date(createdAt) : new Date();
+  return {
+    id: uniqueId(),
+    name: String(name || 'Meal'),
+    calories: Math.round(Number(calories) || 0),
+    grams: Math.round(Number(grams) || 0),
+    dateKey: toDateKey(created),
+    createdAt: created.toISOString(),
+    date: `Today, ${timeLabel(created)}`,
+  };
+}
+
+function normalizeMeals(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map((meal) => {
+    if (meal && meal.id && meal.dateKey) return meal;
+    const created = meal?.createdAt ? new Date(meal.createdAt) : new Date();
+    return {
+      id: meal?.id || uniqueId(),
+      name: meal?.name || 'Meal',
+      calories: Math.round(Number(meal?.calories) || 0),
+      grams: Math.round(Number(meal?.grams) || 0),
+      dateKey: meal?.dateKey || toDateKey(created),
+      createdAt: meal?.createdAt || created.toISOString(),
+      date: meal?.date || `Today, ${timeLabel(created)}`,
+    };
+  });
+}
+
+function loadMealsForUser(uid) {
+  try {
+    return normalizeMeals(JSON.parse(localStorage.getItem(MEALS_STORAGE_KEY(uid))));
+  } catch {
+    return [];
+  }
+}
+
+function saveMealsForUser(uid, meals) {
+  try {
+    localStorage.setItem(MEALS_STORAGE_KEY(uid), JSON.stringify(meals));
+  } catch {
+    // storage unavailable — keep meals in memory only
+  }
+}
+
+/* Consecutive-day logging streak. Alive while today OR yesterday is logged. */
+export function computeStreak(meals) {
+  const days = new Set((meals || []).map((meal) => meal.dateKey).filter(Boolean));
+  const cursor = new Date();
+  if (!days.has(toDateKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  let streak = 0;
+  while (days.has(toDateKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+/* ---------------------------------------------------------------------------
+ * Store
+ * ------------------------------------------------------------------------- */
+
 export const useBoundStore = create((set, get) => ({
   waitlistOpen: false,
   scannedCount: 0,
@@ -29,7 +120,10 @@ export const useBoundStore = create((set, get) => ({
   currentView: 'landing',
 
   isAuthenticated: false,
+  authLoading: true,
+  authError: null,
   user: null,
+  authRedirectView: null,
 
   // Live Machine Learning Prediction State parameters
   scanLoading: false,
@@ -39,44 +133,119 @@ export const useBoundStore = create((set, get) => ({
 
   // Real Food Diary Log — starts empty, no seed/mock entries
   loggedMeals: [],
+  // Last meal committed from a scan — drives the "add another serving" shortcut
+  lastCommittedMeal: null,
 
   toggleWaitlist: () => set((state) => ({ waitlistOpen: !state.waitlistOpen })),
   setView: (view) => set({ currentView: view }),
 
-  signup: (name, email) => {
-    const user = { name, email };
-    localStorage.setItem('naija_user', JSON.stringify(user));
-    localStorage.setItem('naija_token', 'session_active');
-    set({ isAuthenticated: true, user, currentView: 'dashboard' });
-  },
-
-  signin: () => {
-    const storedUser = JSON.parse(localStorage.getItem('naija_user') || 'null');
-    if (!storedUser) return;
-    localStorage.setItem('naija_token', 'session_active');
-    set({ isAuthenticated: true, user: storedUser, currentView: 'dashboard' });
-  },
-
-  signout: () => {
-    localStorage.removeItem('naija_token');
-    set({ isAuthenticated: false, user: null, currentView: 'landing' });
-  },
-
-  checkAuth: () => {
-    const userRaw = localStorage.getItem('naija_user');
-    const token = localStorage.getItem('naija_token');
-    const isRegistered = !!userRaw;
-    const isAuthenticated = !!token;
-    if (isAuthenticated && userRaw) {
-      set({ isAuthenticated: true, user: JSON.parse(userRaw) });
+  setAuthUser: (user) => {
+    const state = get();
+    if (user && !state.isAuthenticated) {
+      const redirect = state.authRedirectView;
+      const isOnAuthPage = state.currentView === 'signup' || state.currentView === 'signin';
+      set({
+        user,
+        isAuthenticated: true,
+        authLoading: false,
+        authError: null,
+        loggedMeals: loadMealsForUser(user.uid),
+        currentView: redirect || (isOnAuthPage ? 'dashboard' : state.currentView),
+        authRedirectView: null,
+      });
+    } else {
+      set({
+        user,
+        isAuthenticated: !!user,
+        authLoading: false,
+        authError: null,
+        loggedMeals: user ? get().loggedMeals : [],
+      });
     }
-    return { isRegistered, isAuthenticated };
+    if (user) hydrateFromFirestore(user.uid);
+  },
+
+  hydrateMeals: (meals) => set({ loggedMeals: normalizeMeals(meals) }),
+
+  setAuthRedirectView: (view) => set({ authRedirectView: view }),
+  clearAuthError: () => set({ authError: null }),
+
+  signup: async (name, email, password) => {
+    set({ authLoading: true, authError: null });
+    try {
+      const user = await signUpWithEmail(name, email, password);
+      const redirect = get().authRedirectView;
+      set({
+        user,
+        isAuthenticated: true,
+        authLoading: false,
+        authRedirectView: null,
+        loggedMeals: loadMealsForUser(user.uid),
+        currentView: redirect || 'dashboard',
+      });
+      hydrateFromFirestore(user.uid);
+    } catch (err) {
+      set({ authLoading: false, authError: getAuthErrorMessage(err) });
+    }
+  },
+
+  signin: async (email, password) => {
+    set({ authLoading: true, authError: null });
+    try {
+      const user = await signInWithEmail(email, password);
+      const redirect = get().authRedirectView;
+      set({
+        user,
+        isAuthenticated: true,
+        authLoading: false,
+        authRedirectView: null,
+        loggedMeals: loadMealsForUser(user.uid),
+        currentView: redirect || 'dashboard',
+      });
+      hydrateFromFirestore(user.uid);
+    } catch (err) {
+      set({ authLoading: false, authError: getAuthErrorMessage(err) });
+    }
+  },
+
+  signinWithGoogle: async () => {
+    set({ authLoading: true, authError: null });
+    try {
+      const user = await signInWithGoogle();
+      const redirect = get().authRedirectView;
+      set({
+        user,
+        isAuthenticated: true,
+        authLoading: false,
+        authRedirectView: null,
+        loggedMeals: loadMealsForUser(user.uid),
+        currentView: redirect || 'dashboard',
+      });
+      hydrateFromFirestore(user.uid);
+    } catch (err) {
+      set({ authLoading: false, authError: getAuthErrorMessage(err) });
+    }
+  },
+
+  signout: async () => {
+    try {
+      await firebaseSignOut();
+    } finally {
+      set({
+        isAuthenticated: false,
+        user: null,
+        authError: null,
+        currentView: 'landing',
+        loggedMeals: [],
+        lastCommittedMeal: null,
+      });
+    }
   },
 
   analyzeFoodImage: async (base64Image) => {
     set({ scanLoading: true, scanError: null, capturedImageSrc: base64Image });
     try {
-      const res = await fetch('http://localhost:8000/api/analyze-plate', {
+      const res = await fetch('/api/analyze-plate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64Image }),
@@ -103,10 +272,15 @@ export const useBoundStore = create((set, get) => ({
       set({
         scanLoading: false,
         scanError: isNetworkError
-          ? 'Cannot reach the analysis server at http://localhost:8000. Start it with: cd backend && start-server.cmd'
+          ? 'Cannot reach the analysis server. In local dev, start it with backend\\start-server.cmd (or run npm run dev:all). Press Retry scan to try again.'
           : err.message || 'An issue occurred during analysis.',
       });
     }
+  },
+
+  retryScan: async () => {
+    const image = get().capturedImageSrc;
+    if (image) await get().analyzeFoodImage(image);
   },
 
   updateResultModifiers: (updates) => {
@@ -122,21 +296,87 @@ export const useBoundStore = create((set, get) => ({
     });
   },
 
+  /* ---- Food diary mutations (all write through to storage) ---- */
+
   commitScannedMeal: () => {
-    const meal = get().scannedFoodData;
-    if (!meal) return;
-    const computed = plateTotals(meal);
-    const newLoggedItem = {
-      id: Date.now(),
-      name: primaryDishName(meal),
+    const scan = get().scannedFoodData;
+    if (!scan) return;
+    const computed = plateTotals(scan);
+    const meal = buildMeal({
+      name: primaryDishName(scan),
       calories: computed.calories,
       grams: computed.grams,
-      date: `Today, ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
-    };
-    set((state) => ({
-      loggedMeals: [newLoggedItem, ...state.loggedMeals],
+    });
+    const meals = [meal, ...get().loggedMeals];
+    persistMeals(meals);
+    set({
+      loggedMeals: meals,
+      lastCommittedMeal: meal,
       currentView: 'dashboard',
-      scannedFoodData: null
-    }));
-  }
+      scannedFoodData: null,
+    });
+  },
+
+  addManualMeal: (name, calories, grams) => {
+    if (!name || !calories) return;
+    const meal = buildMeal({ name, calories, grams });
+    const meals = [meal, ...get().loggedMeals];
+    persistMeals(meals);
+    set({ loggedMeals: meals, lastCommittedMeal: meal });
+  },
+
+  updateMeal: (id, updates) => {
+    const meals = get().loggedMeals.map((meal) =>
+      meal.id === id ? { ...meal, name: updates.name ?? meal.name, calories: Math.round(Number(updates.calories) || 0), grams: Math.round(Number(updates.grams) || 0) } : meal
+    );
+    persistMeals(meals);
+    set({ loggedMeals: meals });
+  },
+
+  deleteMeal: (id) => {
+    const meals = get().loggedMeals.filter((meal) => meal.id !== id);
+    persistMeals(meals);
+    set({ loggedMeals: meals });
+  },
+
+  addAnotherServing: () => {
+    const last = get().lastCommittedMeal;
+    if (!last) return;
+    const meal = buildMeal({
+      name: last.name,
+      calories: last.calories,
+      grams: last.grams,
+    });
+    const meals = [meal, ...get().loggedMeals];
+    persistMeals(meals);
+    set({ loggedMeals: meals, lastCommittedMeal: meal });
+  },
+
+  dismissLastCommitted: () => set({ lastCommittedMeal: null }),
 }));
+
+/* ---------------------------------------------------------------------------
+ * Persistence helpers (localStorage always, Firestore when signed in)
+ * ------------------------------------------------------------------------- */
+
+function persistMeals(meals) {
+  const { user } = useBoundStore.getState();
+  saveMealsForUser(user?.uid, meals);
+  if (user?.uid) {
+    saveMealsToFirestore(user.uid, meals).catch(() => {
+      // Firestore unavailable (not created / offline) — localStorage already saved
+    });
+  }
+}
+
+function hydrateFromFirestore(uid) {
+  loadMealsFromFirestore(uid)
+    .then((remote) => {
+      if (!Array.isArray(remote)) return;
+      useBoundStore.getState().hydrateMeals(remote);
+      saveMealsForUser(uid, remote);
+    })
+    .catch(() => {
+      // Firestore unavailable — local storage copy stays authoritative
+    });
+}

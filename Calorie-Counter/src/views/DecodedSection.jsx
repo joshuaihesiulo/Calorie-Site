@@ -1,10 +1,11 @@
 import { REAL_FOOD_IMAGES } from '../constants/images';
+import { StarIcon, CheckIcon } from '../components/icons';
 
 export default function DecodedSection() {
   return (
     <section className="bg-white px-6 py-20 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start mb-12 gap-4">
-        <h2 className="text-4xl md:text-5xl font-black text-[#2C3768] tracking-tighter">
+        <h2 className="text-4xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter">
           Your Food, Decoded
         </h2>
         <p className="text-gray-400 text-xs md:text-sm max-w-xs text-right md:self-end leading-tight font-medium">
@@ -20,7 +21,9 @@ export default function DecodedSection() {
             <img src={REAL_FOOD_IMAGES.userProfile} alt="User portrait" className="w-full h-full object-cover" />
             <div className="absolute bottom-4 left-4 right-4 bg-[#2C3768]/80 backdrop-blur-md rounded-2xl p-4 flex items-center justify-between text-white">
               <span className="font-bold text-sm">Adaeze Okonkwo</span>
-              <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-[#E92A43] text-xs">★</div>
+              <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-[#E92A43]">
+                <StarIcon className="w-3.5 h-3.5 text-[#E92A43]" />
+              </div>
             </div>
           </div>
 
@@ -47,9 +50,9 @@ export default function DecodedSection() {
             <div>
               <h3 className="text-[#2C3768] font-black text-xl mb-4 tracking-tight">User Goals</h3>
               <ul className="space-y-2 text-[#2C3768] font-bold text-sm">
-                <li>✓ Track daily calories and macros</li>
-                <li>✓ Understand portion sizes visually</li>
-                <li>✓ Build healthier eating habits</li>
+                <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[#00A86B] flex-shrink-0" /> Track daily calories and macros</li>
+                <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[#00A86B] flex-shrink-0" /> Understand portion sizes visually</li>
+                <li className="flex items-center gap-2"><CheckIcon className="w-4 h-4 text-[#00A86B] flex-shrink-0" /> Build healthier eating habits</li>
               </ul>
             </div>
             <p className="text-[#2C3768]/70 font-medium text-xs mt-4 leading-relaxed">

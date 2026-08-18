@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useBoundStore, plateTotals, primaryDishName } from '../store/useBoundStore';
+import { AlertIcon, XIcon, LockIcon } from './icons';
 
 const RESOLUTION_LABELS = {
   direct: 'Direct',
@@ -16,6 +18,22 @@ export default function ScanResultView() {
   const updateResultModifiers = useBoundStore((state) => state.updateResultModifiers);
   const commitScannedMeal = useBoundStore((state) => state.commitScannedMeal);
   const setView = useBoundStore((state) => state.setView);
+  const isAuthenticated = useBoundStore((state) => state.isAuthenticated);
+  const setAuthRedirectView = useBoundStore((state) => state.setAuthRedirectView);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+
+  const handleCommit = () => {
+    if (!isAuthenticated) {
+      setShowSignInPrompt(true);
+      return;
+    }
+    commitScannedMeal();
+  };
+
+  const goToAuth = (view) => {
+    setAuthRedirectView('result');
+    setView(view);
+  };
 
   if (!scannedFoodData) {
     return (
@@ -87,8 +105,9 @@ export default function ScanResultView() {
                 <p className="text-xs text-gray-500 mt-1">Calculated Weight: <strong className="text-white">{computed.grams}g</strong></p>
 
                 {unresolvedDishes.length > 0 && (
-                  <p className="text-[10px] text-amber-400 font-bold mt-2">
-                    ⚠️ Not counted (no FAO data yet): {unresolvedDishes.map(humanize).join(', ')}
+                  <p className="text-[10px] text-amber-400 font-bold mt-2 flex items-start gap-1.5">
+                    <AlertIcon className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
+                    Not counted (no FAO data yet): {unresolvedDishes.map(humanize).join(', ')}
                   </p>
                 )}
               </div>
@@ -173,7 +192,7 @@ export default function ScanResultView() {
 
           <div className="mt-8 space-y-3">
             <button
-              onClick={commitScannedMeal}
+              onClick={handleCommit}
               className="w-full bg-[#6B5E96] text-white font-black py-4 rounded-2xl hover:bg-[#6B5E96]/95 transition-all text-sm shadow-md"
             >
               Commit to Food Diary
@@ -187,6 +206,47 @@ export default function ScanResultView() {
           </div>
         </div>
       </div>
+
+      {showSignInPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="bg-[#12121A] border border-white/10 rounded-[2rem] p-8 max-w-md w-full relative shadow-2xl text-center">
+            <button
+              onClick={() => setShowSignInPrompt(false)}
+              className="absolute top-4 right-4 text-[#8A8A9E] hover:text-white"
+              aria-label="Close"
+            >
+              <XIcon className="w-5 h-5" />
+            </button>
+            <div className="w-12 h-12 rounded-2xl bg-[#6B5E96]/20 flex items-center justify-center mx-auto mb-4">
+              <LockIcon className="w-6 h-6 text-[#6B5E96]" />
+            </div>
+            <h3 className="text-xl font-black tracking-tight text-white mb-2">Sign in to save this meal</h3>
+            <p className="text-xs font-medium text-[#8A8A9E] leading-relaxed mb-6">
+              Your scan is kept safe — sign in and we'll bring you right back so you can add it to your food diary.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => goToAuth('signin')}
+                className="w-full bg-[#6B5E96] text-white font-black py-4 rounded-2xl hover:bg-[#6B5E96]/95 transition-all text-sm"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => goToAuth('signup')}
+                className="w-full bg-white/5 border border-white/10 text-white font-black py-4 rounded-2xl hover:bg-white/10 transition-all text-sm"
+              >
+                Create Free Account
+              </button>
+              <button
+                onClick={() => setShowSignInPrompt(false)}
+                className="w-full text-[#8A8A9E] font-bold py-2 text-xs hover:text-white transition-colors"
+              >
+                Not now — keep scanning
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
