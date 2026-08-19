@@ -37,7 +37,7 @@ export default function App() {
       <Navbar />
       
       {currentView === 'landing' ? (
-        <main>
+        <main key="landing" className="animate-pageIn">
           <div className="relative">
             <HeroSection />
           </div>
@@ -49,8 +49,8 @@ export default function App() {
           <HowItWorks />
         </main>
       ) : (
-        <main className="bg-[#F9F8F4] py-8 sm:py-12 px-4 min-h-[90vh] flex items-center justify-center transition-all duration-300 max-md:p-0 max-md:items-stretch">
-          <div className="w-full max-w-md lg:max-w-5xl xl:max-w-6xl bg-white rounded-[2rem] lg:rounded-[3rem] shadow-[0_24px_60px_rgba(44,55,104,0.12)] border-4 border-[#2C3768]/10 overflow-hidden max-md:max-w-none max-md:rounded-none max-md:border-0 max-md:shadow-none max-md:min-h-[calc(100dvh-69px)]">
+        <main key={effectiveView} className="bg-[#F9F8F4] py-8 sm:py-12 px-4 min-h-[90vh] flex items-center justify-center transition-all duration-300 max-md:p-0 max-md:items-stretch">
+          <div className="w-full max-w-md lg:max-w-5xl xl:max-w-6xl bg-white rounded-[2rem] lg:rounded-[3rem] shadow-[0_24px_60px_rgba(44,55,104,0.12)] border-4 border-[#2C3768]/10 overflow-hidden max-md:max-w-none max-md:rounded-none max-md:border-0 max-md:shadow-none max-md:min-h-[calc(100dvh-69px)] animate-pageIn">
             {effectiveView === 'signup' && <SignUpView />}
             {effectiveView === 'signin' && <SignInView />}
             {effectiveView === 'scan' && <ScanView />}

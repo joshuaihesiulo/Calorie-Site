@@ -1,9 +1,11 @@
 import { REAL_FOOD_IMAGES } from '../constants/images';
 import { StarIcon, CheckIcon } from '../components/icons';
+import Reveal from '../components/Reveal';
 
 export default function DecodedSection() {
   return (
     <section className="bg-white px-6 py-20 max-w-6xl mx-auto">
+      <Reveal>
       <div className="flex flex-col md:flex-row justify-between items-start mb-12 gap-4">
         <h2 className="text-3xl md:text-4xl font-black font-display text-[#2C3768] tracking-tighter">
           Your Food, Decoded
@@ -12,10 +14,12 @@ export default function DecodedSection() {
           NaijaCounts helps you understand calories, portions, and nutrition patterns so you can eat smarter every single day.
         </p>
       </div>
+      </Reveal>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Left Side Group Stack */}
+        <Reveal delay={80}>
         <div className="flex flex-col gap-6">
           <div className="rounded-[2.5rem] overflow-hidden bg-gray-100 aspect-video relative group shadow-lg">
             <img src={REAL_FOOD_IMAGES.userProfile} alt="User portrait" className="w-full h-full object-cover" />
@@ -43,8 +47,10 @@ export default function DecodedSection() {
             </div>
           </div>
         </div>
+        </Reveal>
 
         {/* Right Side Group Stack */}
+        <Reveal delay={160}>
         <div className="flex flex-col gap-6">
           <div className="bg-[#FFF4CA]/40 border border-[#FFF4CA]/80 rounded-[2rem] p-8 flex flex-col justify-between h-full min-h-[240px]">
             <div>
@@ -67,6 +73,7 @@ export default function DecodedSection() {
             </p>
           </div>
         </div>
+        </Reveal>
 
       </div>
     </section>

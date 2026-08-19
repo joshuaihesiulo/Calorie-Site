@@ -68,10 +68,21 @@ export default function DailyDashboardView() {
   const [comboName, setComboName] = useState('');
   const [combosOpen, setCombosOpen] = useState(false);
 
-  const selectedMeals = loggedMeals
-    .filter((meal) => meal.dateKey === selectedKey)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  const selectedCalories = selectedMeals.reduce((acc, meal) => acc + meal.calories, 0);
+  const mealsByKey = useMemo(() => {
+    const map = new Map();
+    for (const meal of loggedMeals) {
+      const list = map.get(meal.dateKey);
+      if (list) list.push(meal);
+      else map.set(meal.dateKey, [meal]);
+    }
+    return map;
+  }, [loggedMeals]);
+
+  const selectedMeals = useMemo(
+    () => (mealsByKey.get(selectedKey) || []).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+    [mealsByKey, selectedKey]
+  );
+  const selectedCalories = useMemo(() => selectedMeals.reduce((acc, meal) => acc + meal.calories, 0), [selectedMeals]);
   const streak = useMemo(() => computeStreak(loggedMeals), [loggedMeals]);
 
   const recentMeals = useMemo(() => {
@@ -219,7 +230,7 @@ export default function DailyDashboardView() {
           <div className="flex items-center gap-1 sm:gap-2 mb-5 overflow-x-auto pb-1">
             {dayOptions.map((day) => {
               const active = day.dateKey === selectedKey;
-              const hasMeals = loggedMeals.some((meal) => meal.dateKey === day.dateKey);
+              const hasMeals = mealsByKey.has(day.dateKey);
               return (
                 <button
                   key={day.dateKey}
@@ -255,15 +266,15 @@ export default function DailyDashboardView() {
         </div>
 
         <div className="grid grid-cols-3 lg:grid-cols-1 gap-3 lg:w-56 xl:w-64">
-          <button onClick={openGoalModal} className="bg-[#E7F7AD]/50 hover:bg-[#E7F7AD]/80 border border-[#E7F7AD] rounded-2xl p-4 text-center transition-all">
+          <button onClick={openGoalModal} className="bg-[#E7F7AD]/50 hover:bg-[#E7F7AD]/80 border border-[#E7F7AD] rounded-2xl p-4 text-center transition-all animate-softPop" style={{ animationDelay: '60ms' }}>
             <span className="text-[10px] font-bold text-gray-500 block mb-0.5">Goal</span>
             <span className="text-sm lg:text-base font-black">{calorieGoal.toLocaleString()} cal</span>
           </button>
-          <div className="bg-[#00F090] rounded-2xl p-4 text-center shadow-xs">
+          <div className="bg-[#00F090] rounded-2xl p-4 text-center shadow-xs animate-softPop" style={{ animationDelay: '140ms' }}>
             <span className="text-[10px] font-black text-[#2C3768]/70 block mb-0.5">Logged</span>
             <span className="text-sm lg:text-base font-black">{selectedCalories.toLocaleString()} cal</span>
           </div>
-          <div className="bg-[#E7F7AD]/50 border border-[#E7F7AD] rounded-2xl p-4 text-center">
+          <div className="bg-[#E7F7AD]/50 border border-[#E7F7AD] rounded-2xl p-4 text-center animate-softPop" style={{ animationDelay: '220ms' }}>
             <span className="text-[10px] font-bold text-gray-500 block mb-0.5">Day Streak</span>
             <span className="text-sm lg:text-base font-black">{streak} {streak === 1 ? 'day' : 'days'} <FlameIcon className="w-4 h-4 inline-block -mt-0.5 text-[#FF7A30]" /></span>
           </div>
@@ -271,19 +282,19 @@ export default function DailyDashboardView() {
       </div>
 
       <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white border border-gray-100 rounded-2xl p-4">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 animate-fadeUp" style={{ animationDelay: '80ms' }}>
           <span className="text-[10px] font-bold text-gray-400 block mb-0.5">7-day avg / day</span>
           <span className="text-sm lg:text-base font-black">{weekStats.avgCalories.toLocaleString()} Kcal</span>
         </div>
-        <div className="bg-white border border-gray-100 rounded-2xl p-4">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 animate-fadeUp" style={{ animationDelay: '160ms' }}>
           <span className="text-[10px] font-bold text-gray-400 block mb-0.5">Meals last 7 days</span>
           <span className="text-sm lg:text-base font-black">{weekStats.mealCount}</span>
         </div>
-        <div className="bg-white border border-gray-100 rounded-2xl p-4">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 animate-fadeUp" style={{ animationDelay: '240ms' }}>
           <span className="text-[10px] font-bold text-gray-400 block mb-0.5">Most-logged dish</span>
           <span className="text-sm lg:text-base font-black block truncate">{weekStats.topDish}</span>
         </div>
-        <div className="bg-white border border-gray-100 rounded-2xl p-4">
+        <div className="bg-white border border-gray-100 rounded-2xl p-4 animate-fadeUp" style={{ animationDelay: '320ms' }}>
           <span className="text-[10px] font-bold text-gray-400 block mb-0.5">Best streak</span>
           <span className="text-sm lg:text-base font-black">{bestRun} {bestRun === 1 ? 'day' : 'days'}</span>
         </div>

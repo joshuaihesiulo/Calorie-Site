@@ -1,4 +1,5 @@
 import { REAL_FOOD_IMAGES } from '../constants/images';
+import Reveal from '../components/Reveal';
 
 export default function CounterSection() {
   return (
@@ -11,8 +12,8 @@ export default function CounterSection() {
       </div>
 
       {/* Interactive Overlapping Content Box */}
-      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-24 relative z-20">
-        <div className="md:col-span-7 bg-white rounded-[2rem] p-4 shadow-2xl border border-dashed border-[#FF7A30]/60">
+      <Reveal delay={100} className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-24 relative z-20">
+        <div className="md:col-span-7 bg-white rounded-[2rem] p-4 shadow-2xl border border-dashed border-[#FF7A30]/60 transition-transform duration-300 hover:-translate-y-1">
           <div className="rounded-[1.5rem] overflow-hidden bg-gray-100 aspect-[4/3] relative">
             <img src={REAL_FOOD_IMAGES.soupDetail} alt="Soup analysis view" className="w-full h-full object-cover" />
           </div>
@@ -35,7 +36,7 @@ export default function CounterSection() {
             <div className="w-2 h-2 rounded-full bg-[#2C3768]/20" />
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
