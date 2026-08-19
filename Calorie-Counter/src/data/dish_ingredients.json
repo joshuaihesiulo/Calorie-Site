@@ -1,33 +1,382 @@
 {
   "jollof_rice": [
-    { "ingredient": "Rice, white, raw", "grams": 100 },
-    { "ingredient": "Tomato, canned, packed in juice", "grams": 60 },
-    { "ingredient": "Onion, fresh, raw", "grams": 20 },
-    { "ingredient": "Palm oil, red", "grams": 15 },
-    { "ingredient": "Pepper, chilli, fresh, raw", "grams": 5 }
+    {
+      "ingredient": "Rice, white, raw",
+      "grams": 100
+    },
+    {
+      "ingredient": "Tomato, canned, packed in juice",
+      "grams": 60
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 20
+    },
+    {
+      "ingredient": "Palm oil, red",
+      "grams": 15
+    },
+    {
+      "ingredient": "Pepper, chilli, fresh, raw",
+      "grams": 5
+    }
+  ],
+  "fried_rice": [
+    {
+      "ingredient": "Rice, white, raw",
+      "grams": 110
+    },
+    {
+      "ingredient": "Carrot, raw",
+      "grams": 35
+    },
+    {
+      "ingredient": "Cabbage, white, raw",
+      "grams": 35
+    },
+    {
+      "ingredient": "Pigeon pea, soaked, boiled in different water* (without salt), drained",
+      "grams": 25
+    },
+    {
+      "ingredient": "Beef meat, moderately fat, ca. 20% fat, raw",
+      "grams": 50
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 12
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 15
+    }
   ],
   "egusi_soup": [
-    { "ingredient": "Melon seed, kernel only, dried, raw", "grams": 80 },
-    { "ingredient": "Palm oil, red", "grams": 30 },
-    { "ingredient": "Spinach, leaves, fresh, raw", "grams": 60 },
-    { "ingredient": "Beef meat, moderately fat, ca. 20% fat, raw", "grams": 100 },
-    { "ingredient": "Shrimp (crayfish), whole, dried", "grams": 15 },
-    { "ingredient": "Onion, fresh, raw", "grams": 15 }
+    {
+      "ingredient": "Melon seed, kernel only, dried, raw",
+      "grams": 80
+    },
+    {
+      "ingredient": "Palm oil, red",
+      "grams": 30
+    },
+    {
+      "ingredient": "Spinach, leaves, fresh, raw",
+      "grams": 60
+    },
+    {
+      "ingredient": "Beef meat, moderately fat, ca. 20% fat, raw",
+      "grams": 100
+    },
+    {
+      "ingredient": "Shrimp (crayfish), whole, dried",
+      "grams": 15
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 15
+    }
+  ],
+  "oha_soup": [
+    {
+      "ingredient": "Pumpkin, leaves, fresh, raw",
+      "grams": 80
+    },
+    {
+      "ingredient": "Cocoyam, tuber, white, raw",
+      "grams": 60
+    },
+    {
+      "ingredient": "Goat meat, moderately fat, ca. 10% fat, raw",
+      "grams": 90
+    },
+    {
+      "ingredient": "Palm oil, red",
+      "grams": 25
+    },
+    {
+      "ingredient": "Shrimp (crayfish), whole, dried",
+      "grams": 10
+    },
+    {
+      "ingredient": "Pepper, chilli, fresh, raw",
+      "grams": 5
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 10
+    }
+  ],
+  "efo_riro": [
+    {
+      "ingredient": "Spinach, leaves, fresh, raw",
+      "grams": 120
+    },
+    {
+      "ingredient": "Beef meat, moderately fat, ca. 20% fat, raw",
+      "grams": 60
+    },
+    {
+      "ingredient": "Palm oil, red",
+      "grams": 20
+    },
+    {
+      "ingredient": "Tomato, canned, packed in juice",
+      "grams": 30
+    },
+    {
+      "ingredient": "Shrimp (crayfish), whole, dried",
+      "grams": 10
+    },
+    {
+      "ingredient": "Pepper, chilli, fresh, raw",
+      "grams": 8
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 15
+    }
   ],
   "pounded_yam": [
-    { "ingredient": "Yam, tuber, combined cultivars, raw (Nigeria)", "grams": 250 }
+    {
+      "ingredient": "Yam, tuber, combined cultivars, raw (Nigeria)",
+      "grams": 250
+    }
   ],
   "amala": [
-    { "ingredient": "Yam, tuber, combined cultivars, raw (Nigeria)", "grams": 200 }
+    {
+      "ingredient": "Yam, tuber, combined cultivars, raw (Nigeria)",
+      "grams": 200
+    }
+  ],
+  "eba": [
+    {
+      "ingredient": "Porridge, tô, from gari and tomato paste (Burkina Faso)*",
+      "grams": 100
+    }
   ],
   "fried_plantain": [
-    { "ingredient": "Plantain, deep fried in unfortified vegetable oil*", "grams": 150 }
+    {
+      "ingredient": "Plantain, deep fried in unfortified vegetable oil*",
+      "grams": 150
+    }
+  ],
+  "boli": [
+    {
+      "ingredient": "Plantain, unripe, ivory flesh, raw",
+      "grams": 200
+    }
   ],
   "moin_moin": [
-    { "ingredient": "Cowpea, white, dry, raw", "grams": 150 },
-    { "ingredient": "Melon seed, kernel only, dried, raw", "grams": 20 },
-    { "ingredient": "Palm oil, red", "grams": 20 },
-    { "ingredient": "Onion, fresh, raw", "grams": 15 },
-    { "ingredient": "Shrimp (crayfish), whole, dried", "grams": 10 }
+    {
+      "ingredient": "Cowpea, white, dry, raw",
+      "grams": 150
+    },
+    {
+      "ingredient": "Melon seed, kernel only, dried, raw",
+      "grams": 20
+    },
+    {
+      "ingredient": "Palm oil, red",
+      "grams": 20
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 15
+    },
+    {
+      "ingredient": "Shrimp (crayfish), whole, dried",
+      "grams": 10
+    }
+  ],
+  "akara": [
+    {
+      "ingredient": "Cowpea, white, dry, raw",
+      "grams": 70
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 12
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 10
+    },
+    {
+      "ingredient": "Pepper, chilli, fresh, raw",
+      "grams": 4
+    }
+  ],
+  "suya": [
+    {
+      "ingredient": "Beef meat, lean, ca. 5% fat, raw",
+      "grams": 150
+    },
+    {
+      "ingredient": "Groundnut, combined varieties, shelled, dried, raw (Ghana)",
+      "grams": 15
+    },
+    {
+      "ingredient": "Pepper, black",
+      "grams": 3
+    },
+    {
+      "ingredient": "Ginger, root, raw",
+      "grams": 3
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 5
+    }
+  ],
+  "goat_meat_pepper_soup": [
+    {
+      "ingredient": "Goat meat, moderately fat, ca. 10% fat, raw",
+      "grams": 150
+    },
+    {
+      "ingredient": "Pepper, chilli, fresh, raw",
+      "grams": 8
+    },
+    {
+      "ingredient": "Ginger, root, raw",
+      "grams": 6
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 10
+    },
+    {
+      "ingredient": "Thyme, dried",
+      "grams": 1
+    }
+  ],
+  "masa": [
+    {
+      "ingredient": "Rice, white, raw",
+      "grams": 60
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 8
+    }
+  ],
+  "chin_chin": [
+    {
+      "ingredient": "Wheat flour, white, unfortified",
+      "grams": 100
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 20
+    },
+    {
+      "ingredient": "Egg, chicken, raw",
+      "grams": 20
+    },
+    {
+      "ingredient": "Milk, cow, powder, whole, unfortified",
+      "grams": 10
+    }
+  ],
+  "puff_puff": [
+    {
+      "ingredient": "Wheat flour, white, unfortified",
+      "grams": 100
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 15
+    },
+    {
+      "ingredient": "Egg, chicken, raw",
+      "grams": 15
+    },
+    {
+      "ingredient": "Milk, cow, powder, whole, unfortified",
+      "grams": 10
+    }
+  ],
+  "meat_pie": [
+    {
+      "ingredient": "Wheat flour, white, unfortified",
+      "grams": 120
+    },
+    {
+      "ingredient": "Margarine, fortified with vitamin A and D (Nigeria)",
+      "grams": 30
+    },
+    {
+      "ingredient": "Beef meat, ground, ca. 10% fat, raw",
+      "grams": 80
+    },
+    {
+      "ingredient": "Potato, raw",
+      "grams": 30
+    },
+    {
+      "ingredient": "Carrot, raw",
+      "grams": 15
+    },
+    {
+      "ingredient": "Onion, fresh, raw",
+      "grams": 10
+    }
+  ],
+  "egg_roll": [
+    {
+      "ingredient": "Wheat flour, white, unfortified",
+      "grams": 100
+    },
+    {
+      "ingredient": "Egg, chicken, raw",
+      "grams": 60
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 15
+    },
+    {
+      "ingredient": "Milk, cow, powder, whole, unfortified",
+      "grams": 5
+    }
+  ],
+  "scotch_egg": [
+    {
+      "ingredient": "Egg, chicken, raw",
+      "grams": 60
+    },
+    {
+      "ingredient": "Beef meat, ground, ca. 10% fat, raw",
+      "grams": 80
+    },
+    {
+      "ingredient": "Wheat flour, white, unfortified",
+      "grams": 30
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 10
+    }
+  ],
+  "potato_chips": [
+    {
+      "ingredient": "Potato, raw",
+      "grams": 60
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 45
+    }
+  ],
+  "plantain_chips": [
+    {
+      "ingredient": "Plantain, unripe, pale flesh, flour",
+      "grams": 60
+    },
+    {
+      "ingredient": "Vegetable oil, unfortified",
+      "grams": 30
+    }
   ]
 }

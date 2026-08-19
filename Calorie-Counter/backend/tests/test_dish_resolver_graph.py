@@ -88,9 +88,13 @@ class TestAiReclassifyPath:
         assert result["unresolved_dishes"] == ["__invented_dish__"]
 
     def test_candidate_keys_are_bounded_and_include_curated(self) -> None:
+        from app.services.dish_resolver_graph import KNOWN_KEYS, MAX_AI_CANDIDATES
+        from app.services.vision import KNOWN_KEYS as VISION_KEYS
+
         keys = _ai_candidate_keys("ewedu_soup")
-        assert len(keys) <= 6 + 20
+        assert len(keys) <= len(VISION_KEYS) + MAX_AI_CANDIDATES
         assert "amala" in keys and "egusi_soup" in keys and "jollof_rice" in keys
+        assert "jollof_rice" in KNOWN_KEYS
 
 
 # ---------------------------------------------------------------------------

@@ -85,7 +85,7 @@ export default function ScanResultView() {
           <div className="bg-[#12121A] rounded-[2.5rem] p-6 lg:p-8 border border-white/5 relative">
             <div className="flex items-start justify-between mb-6">
               <div className="min-w-0">
-                <span className="text-xs font-black text-[#8A8A9E] uppercase block mb-1">Dynamically Sourced (FAO WAFCT)</span>
+                <span className="text-xs font-black text-[#8A8A9E] uppercase block mb-1">Dynamically Sourced (WAFCT · Open Food Facts)</span>
                 <h2 className="text-2xl font-black tracking-tight text-[#00F090] mb-2 truncate">{name}</h2>
 
                 {scaledDishes.length > 0 && (
@@ -152,7 +152,15 @@ export default function ScanResultView() {
                   <div key={i} className="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-2xl px-4 py-3">
                     <div className="min-w-0">
                       <span className="text-sm font-black text-white block truncate">{d.displayName || d.dishKey}</span>
-                      <span className="text-[10px] font-bold text-[#8A8A9E]">{Math.round(d.grams)}g estimated · {RESOLUTION_LABELS[d.resolutionMethod] || d.resolutionMethod} match</span>
+                      <span className="text-[10px] font-bold text-[#8A8A9E]">
+                        {Math.round(d.grams)}g estimated · {RESOLUTION_LABELS[d.resolutionMethod] || d.resolutionMethod} match
+                        {d.faoResult?.source === 'open_food_facts' && (
+                          <span className="text-[#00F090]"> · Open Food Facts</span>
+                        )}
+                        {d.faoResult?.source === 'package_label' && (
+                          <span className="text-[#00F090]"> · Package Label</span>
+                        )}
+                      </span>
                     </div>
                     <span className="text-sm font-black text-[#00F090] flex-shrink-0">{d.calories} Kcal</span>
                   </div>

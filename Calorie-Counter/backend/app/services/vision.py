@@ -1,7 +1,8 @@
 """Gemini closed-vocabulary vision service for dish identification.
 
 ``identify_dishes`` sends a plate photo to Gemini along with a bounded
-vocabulary of curated dish keys (the recipes in ``dish_ingredients.json``).
+vocabulary of curated dish keys (the recipes in ``dish_ingredients.json``
+plus curated packaged snacks in ``snacks.json``).
 Gemini may invent lowercase_underscore keys for dishes outside the vocabulary;
 those keys are resolved against the full FAO/WAFCT key space later in the
 pipeline.
@@ -17,32 +18,64 @@ import re
 from app.config import get_settings
 from app.services.fao_lookup import get_all_known_keys
 
-# Curated closed vocabulary — exactly the keys in dish_ingredients.json.
+# Curated closed vocabulary — the exactly curated dish + snack keys.
 # The full key space (get_all_known_keys(), ~1k entries) is far too large to
 # embed in a prompt; these anchors keep Gemini focused and accurate.
 KNOWN_KEYS = (
     "jollof_rice",
+    "fried_rice",
     "egusi_soup",
+    "oha_soup",
+    "efo_riro",
     "pounded_yam",
     "amala",
+    "eba",
     "fried_plantain",
+    "boli",
     "moin_moin",
+    "akara",
+    "suya",
+    "goat_meat_pepper_soup",
+    "masa",
+    "chin_chin",
+    "puff_puff",
+    "meat_pie",
+    "egg_roll",
+    "scotch_egg",
+    "potato_chips",
+    "plantain_chips",
+    "gala_chicken_roll",
+    "beloxxi_milk_biscuit",
+    "indomie_chicken_noodles",
+    "peak_evaporated_milk",
+    "maltina_malt_drink",
+    "coca_cola_50cl",
+    "bigi_cola_50cl",
+    "five_alive_pineapple_330ml",
+    "milo_tin_powder",
+    "lacasera_pineapple_35cl",
 )
 
 MAX_ATTEMPTS = 3  # initial call + 2 retries
 
 IDENTIFY_PROMPT = """Look at this plate of West African/Nigerian food carefully.
-List EVERY visually distinct dish on the plate with estimated weight in grams.
+List EVERY visually distinct item on the plate or in the photo, with estimated weight in grams.
 
-You MUST try to match each dish to one of these exact known keys if plausible:
+You MUST try to match each item to one of these exact known keys if plausible:
 {known_keys}
 
-Only invent a new lowercase_underscore key if the dish clearly does NOT match any above.
+Only invent a new lowercase_underscore key if the item clearly does NOT match any above.
+
+For PACKAGED products (chips, biscuits, drinks, noodles, candy, bottled beverages...):
+- set isPackaged to true
+- brandHint: the product or brand name printed on the package as the user would read it,
+  e.g. "Gala Chicken Roll", "Indomie Chicken", "Maltina", "Coca-Cola 50cl"
+For cooked/street food, isPackaged must be false and brandHint null.
 
 Return ONLY raw JSON, no markdown, no backticks:
 {{
   "dishes": [
-    {{ "dishKey": "amala", "displayName": "Amala", "estimatedGrams": 200 }}
+    {{ "dishKey": "amala", "displayName": "Amala", "estimatedGrams": 200, "isPackaged": false, "brandHint": null }}
   ]
 }}"""
 

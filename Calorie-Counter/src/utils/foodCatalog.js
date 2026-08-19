@@ -1,23 +1,41 @@
 /* Searchable food catalog built from the bundled nutrition datasets.
  *
- * Mirrors the backend's two-tier lookup:
+ * Mirrors the backend's three-tier lookup:
  *   1. dish keys (dish_ingredients.json) -> per-100g profile aggregated from
  *      their ingredient lists against the WAFCT table.
- *   2. WAFCT foods (fao_wafct.json) -> their stored per-100g profile.
+ *   2. curated packaged snacks (snacks.json) -> their stored per-100g profile.
+ *   3. WAFCT foods (fao_wafct.json) -> their stored per-100g profile.
  *
  * Used by the manual "add meal" picker on the dashboard.
  */
 
 import faoWafct from '../data/fao_wafct.json';
 import dishIngredients from '../data/dish_ingredients.json';
+import snacks from '../data/snacks.json';
 
 const DISH_NAMES = {
   jollof_rice: 'Jollof Rice',
+  fried_rice: 'Fried Rice',
   egusi_soup: 'Egusi Soup',
+  oha_soup: 'Oha Soup',
+  efo_riro: 'Efo Riro',
   pounded_yam: 'Pounded Yam',
   amala: 'Amala',
+  eba: 'Eba',
   fried_plantain: 'Fried Plantain',
+  boli: 'Boli (Roasted Plantain)',
   moin_moin: 'Moin Moin',
+  akara: 'Akara',
+  suya: 'Suya',
+  goat_meat_pepper_soup: 'Goat Meat Pepper Soup',
+  masa: 'Masa',
+  chin_chin: 'Chin Chin',
+  puff_puff: 'Puff Puff',
+  meat_pie: 'Meat Pie',
+  egg_roll: 'Egg Roll',
+  scotch_egg: 'Scotch Egg',
+  potato_chips: 'Potato Chips',
+  plantain_chips: 'Plantain Chips',
 };
 
 const NUTRIENTS = ['calories', 'protein', 'carbs', 'fat', 'fiber'];
@@ -65,6 +83,20 @@ const DISH_PROFILES = Object.keys(dishIngredients)
   .map(aggregateDishProfile)
   .filter(Boolean);
 
+const SNACK_PROFILES = Object.entries(snacks).map(([key, snack]) => ({
+  name: snack.name,
+  key,
+  brand: snack.brand,
+  source: 'snack',
+  serving_grams: snack.serving_grams,
+  serving_label: snack.serving_label,
+  calories_per_100g: snack.calories_per_100g,
+  protein_per_100g: snack.protein_per_100g,
+  carbs_per_100g: snack.carbs_per_100g,
+  fat_per_100g: snack.fat_per_100g,
+  fiber_per_100g: snack.fiber_per_100g,
+}));
+
 const WAFCT_PROFILES = faoWafct.map((food) => ({
   name: food.name,
   source: 'wafct',
@@ -75,7 +107,7 @@ const WAFCT_PROFILES = faoWafct.map((food) => ({
   fiber_per_100g: food.fiber_per_100g,
 }));
 
-const CATALOG = [...DISH_PROFILES, ...WAFCT_PROFILES];
+const CATALOG = [...DISH_PROFILES, ...SNACK_PROFILES, ...WAFCT_PROFILES];
 
 function matchScore(name, q) {
   if (name === q) return 100;

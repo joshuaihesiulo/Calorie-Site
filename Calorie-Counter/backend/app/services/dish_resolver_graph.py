@@ -4,11 +4,15 @@ Routes each detected dish through up to four resolution checks, then
 aggregates plate totals:
 
     START -> check_fao_match -> fuzzy_match_dish -> ai_reclassify_dish
+          -> check_off_match (OFF API, packaged items only)
           -> mark_unresolved -> advance_index (loop) -> aggregate_nutrients -> END
 
 Each dish in ``raw_dishes`` is processed one per loop iteration, advancing
 ``current_index`` until every dish is done. ``action`` is an internal state
-field used only for conditional routing between nodes.
+field used only for conditional routing between nodes. Items Gemini flagged
+as packaged (``isPackaged`` / ``brandHint``) that no local dataset or LLM
+could resolve get one live Open Food Facts query; the node returns quickly
+without network I/O for everything else.
 """
 
 from __future__ import annotations
@@ -20,6 +24,7 @@ from rapidfuzz import fuzz, process
 
 from app.services import providers
 from app.services.fao_lookup import get_all_known_keys, lookup_direct_fao
+from app.services.nutrition_router import resolve_food_item
 from app.services.vision import KNOWN_KEYS
 
 logger = logging.getLogger(__name__)
@@ -163,15 +168,50 @@ def ai_reclassify_dish(state: PlateState) -> dict[str, Any]:
     dish = _current_dish(state)
     reclassified = providers.ai_reclassify_dish(dish["dishKey"], _ai_candidate_keys(dish["dishKey"]))
     if reclassified is None:
-        return {"action": "mark_unresolved"}
+        return {"action": "check_off_match"}
 
     result = lookup_direct_fao(reclassified)
     if result is None:
-        return {"action": "mark_unresolved"}
+        return {"action": "check_off_match"}
 
     return {
         "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "ai_reclassify", result)],
         "logs": [*state["logs"], f"[AI] '{dish['dishKey']}' -> '{reclassified}'"],
+        "action": "advance_index",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Node 3.5: Open Food Facts (packaged items only)
+# ---------------------------------------------------------------------------
+def check_off_match(state: PlateState) -> dict[str, Any]:
+    dish = _current_dish(state)
+    is_packaged = bool(dish.get("isPackaged")) or bool(dish.get("brandHint"))
+    if not is_packaged:
+        return {
+            "logs": [*state["logs"], f"[OFF SKIP] '{dish['dishKey']}' not packaged"],
+            "action": "mark_unresolved",
+        }
+
+    result = resolve_food_item(
+        dish["dishKey"],
+        display_name=str(dish.get("displayName", "")),
+        is_packaged=True,
+        brand_hint=dish.get("brandHint"),
+    )
+    if result is None:
+        return {
+            "logs": [*state["logs"], f"[OFF MISS] '{dish['dishKey']}'"],
+            "action": "mark_unresolved",
+        }
+
+    entry = _resolved_entry(dish, "off", result)
+    if result.get("serving_grams"):
+        entry["estimatedGrams"] = float(result["serving_grams"])
+
+    return {
+        "resolved_dishes": [*state["resolved_dishes"], entry],
+        "logs": [*state["logs"], f"[OFF] '{dish['dishKey']}' -> '{result.get('name')}'"],
         "action": "advance_index",
     }
 
@@ -194,6 +234,7 @@ def mark_unresolved(state: PlateState) -> dict[str, Any]:
 ACTION_EDGES = {
     "fuzzy_match_dish": "fuzzy_match_dish",
     "ai_reclassify_dish": "ai_reclassify_dish",
+    "check_off_match": "check_off_match",
     "mark_unresolved": "mark_unresolved",
     "advance_index": "advance_index",
     "aggregate_nutrients": "aggregate_nutrients",
@@ -246,6 +287,7 @@ def build_plate_resolution_graph():
     graph.add_node("check_fao_match", check_fao_match)
     graph.add_node("fuzzy_match_dish", fuzzy_match_dish)
     graph.add_node("ai_reclassify_dish", ai_reclassify_dish)
+    graph.add_node("check_off_match", check_off_match)
     graph.add_node("mark_unresolved", mark_unresolved)
     graph.add_node("advance_index", advance_index)
     graph.add_node("aggregate_nutrients", aggregate_nutrients)
@@ -254,6 +296,7 @@ def build_plate_resolution_graph():
     graph.add_conditional_edges("check_fao_match", route_by_action, ACTION_EDGES)
     graph.add_conditional_edges("fuzzy_match_dish", route_by_action, ACTION_EDGES)
     graph.add_conditional_edges("ai_reclassify_dish", route_by_action, ACTION_EDGES)
+    graph.add_conditional_edges("check_off_match", route_by_action, ACTION_EDGES)
     graph.add_edge("mark_unresolved", "advance_index")
     graph.add_conditional_edges(
         "advance_index",

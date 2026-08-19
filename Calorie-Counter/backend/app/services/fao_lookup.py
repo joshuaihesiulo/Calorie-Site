@@ -5,10 +5,13 @@ Two local datasets are bundled with the app:
 * ``fao_wafct.json``        — FAO/WAFCT food records with per-100g nutrients.
 * ``dish_ingredients.json`` — hand-curated recipes for Nigerian dishes
                               (ingredient names + grams per ingredient).
+* ``food_aliases.json``     — alias name -> canonical dish/snack key.
+* ``snacks.json``           — curated packaged-snack profiles per 100g
+                              (sourced from Open Food Facts / package labels).
 
 ``lookup_direct_fao`` resolves a dish key to a per-100g nutrient profile:
-recipe keys are aggregated from their ingredients, food keys return their
-stored profile directly.
+recipe keys are aggregated from their ingredients, snack keys return their
+stored profile, food keys return their stored profile directly.
 """
 
 from __future__ import annotations
@@ -21,6 +24,12 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 _foods: list[dict] = json.loads((DATA_DIR / "fao_wafct.json").read_text(encoding="utf-8"))
 _dish_recipes: dict[str, list[dict]] = json.loads(
     (DATA_DIR / "dish_ingredients.json").read_text(encoding="utf-8")
+)
+_snacks: dict[str, dict] = json.loads(
+    (DATA_DIR / "snacks.json").read_text(encoding="utf-8")
+)
+_alias_table: dict[str, list[str]] = json.loads(
+    (DATA_DIR / "food_aliases.json").read_text(encoding="utf-8")
 )
 
 NUTRIENT_FIELDS = (
@@ -37,6 +46,13 @@ def _normalize(text: str) -> str:
     return " ".join(text.strip().lower().split())
 
 
+# alias (case-folded, normalized) -> canonical dish/snack key
+_aliases: dict[str, str] = {}
+for _canonical, _alias_list in _alias_table.items():
+    for _alias in _alias_list:
+        _aliases[_normalize(_alias)] = _canonical
+
+
 def _find_food(ingredient_name: str) -> dict | None:
     """Find an FAO/WAFCT record: exact case-insensitive name, then substring."""
     wanted = _normalize(ingredient_name)
@@ -47,15 +63,22 @@ def _find_food(ingredient_name: str) -> dict | None:
 
 
 def get_all_known_keys() -> list[str]:
-    """Return a deduplicated list of every lookup key across both datasets.
+    """Return a deduplicated list of every lookup key across all datasets.
 
-    Recipe keys come first (``dish_ingredients.json``), then FAO/WAFCT food
-    names. Lookups are case-insensitive, so keys are deduplicated case-folded.
+    Recipe keys come first (``dish_ingredients.json``), then snack keys
+    (``snacks.json``), then alias names (``food_aliases.json``), then
+    FAO/WAFCT food names. Lookups are case-insensitive, so keys are
+    deduplicated case-folded.
     """
     keys: list[str] = []
     seen: set[str] = set()
 
-    for key in [*_dish_recipes.keys(), *(f["name"] for f in _foods)]:
+    for key in [
+        *_dish_recipes.keys(),
+        *_snacks.keys(),
+        *_aliases.keys(),
+        *(f["name"] for f in _foods),
+    ]:
         folded = _normalize(key)
         if folded in seen:
             continue
@@ -105,15 +128,37 @@ def _aggregate_recipe(key: str) -> dict | None:
 def lookup_direct_fao(key: str) -> dict | None:
     """Resolve ``key`` to a per-100g nutrient profile, or ``None`` if unknown.
 
-    Priority: recipe key in ``dish_ingredients.json`` (aggregated from
-    ingredients), then a direct record in ``fao_wafct.json`` (exact name,
-    then substring match).
+    Priority: alias -> canonical key, recipe key in ``dish_ingredients.json``
+    (aggregated from ingredients), snack key in ``snacks.json`` (stored
+    profile), then a direct record in ``fao_wafct.json`` (exact name, then
+    substring match).
     """
     wanted = _normalize(key)
+    canonical = _aliases.get(wanted)
+    if canonical is not None:
+        wanted = _normalize(canonical)
 
     recipe_key = next((k for k in _dish_recipes if _normalize(k) == wanted), None)
     if recipe_key is not None:
         return _aggregate_recipe(recipe_key)
+
+    snack_key = next((k for k in _snacks if _normalize(k) == wanted), None)
+    if snack_key is not None:
+        snack = _snacks[snack_key]
+        return {
+            "key": snack_key,
+            "name": snack["name"],
+            "source": snack.get("source", "package_label"),
+            "calories_per_100g": snack.get("calories_per_100g"),
+            "protein_per_100g": snack.get("protein_per_100g"),
+            "carbs_per_100g": snack.get("carbs_per_100g"),
+            "fat_per_100g": snack.get("fat_per_100g"),
+            "fiber_per_100g": snack.get("fiber_per_100g"),
+            "serving_grams": snack.get("serving_grams"),
+            "serving_label": snack.get("serving_label"),
+            "brand": snack.get("brand"),
+            "verified": snack.get("verified", False),
+        }
 
     food = next((f for f in _foods if _normalize(f["name"]) == wanted), None)
     if food is None:
@@ -122,7 +167,7 @@ def lookup_direct_fao(key: str) -> dict | None:
         return None
 
     return {
-        "key": key,
+        "key": food["name"],
         "name": food["name"],
         "source": "fao_wafct",
         "calories_per_100g": food.get("calories_per_100g"),
