@@ -3,11 +3,6 @@ import { REAL_FOOD_IMAGES } from '../constants/images';
 export default function HeroSection() {
   return (
     <section className="relative min-h-[90vh] bg-white px-6 py-12 flex flex-col items-center justify-center overflow-hidden">
-      {/* Skewed Badge */}
-      <div className="inline-block bg-[#00F090] text-[#2C3768] text-sm font-bold px-4 py-1.5 rounded-full transform -rotate-2 mb-6 tracking-tight">
-        AI for Nigerian meals
-      </div>
-
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
         
         {/* Left Hand Card Visual */}
@@ -22,8 +17,8 @@ export default function HeroSection() {
 
         {/* Center Text Block Layout */}
         <div className="lg:col-span-6 text-center flex flex-col items-center">
-          <h1 className="text-5xl md:text-7xl font-black font-display text-[#2C3768] tracking-tighter leading-[0.95] mb-6">
-            Track Smarter.<br />Eat Naija.<br />Live Better.
+          <h1 className="text-3xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter leading-[0.95] mb-6">
+            Track Smarter.<br /><span className="text-black">Eat Naija.</span><br />Live Better.
           </h1>
           <p className="text-gray-600 text-base md:text-lg max-w-md mb-8 font-normal leading-relaxed">
             Snap amala, jollof, suya, egusi, moi moi, or plantain and get instant calories, macros, and portion guidance built for African plates.

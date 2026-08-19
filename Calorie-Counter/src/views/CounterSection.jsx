@@ -3,21 +3,15 @@ import { REAL_FOOD_IMAGES } from '../constants/images';
 export default function CounterSection() {
   return (
     <section className="bg-[#F9F8F4] relative py-24 px-6 overflow-hidden">
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10">
-        <span className="bg-[#00F090] text-[#2C3768] text-xs font-bold px-4 py-1 rounded-full">
-          AI Calorie
-        </span>
-      </div>
-
       {/* Massive Typography Backdrop */}
       <div className="w-full text-center select-none pointer-events-none absolute left-0 right-0 top-12">
-        <h2 className="text-[12rem] md:text-[22rem] font-black font-display text-[#E92A43] tracking-tighter leading-none opacity-90">
+        <h2 className="text-[9rem] md:text-[14rem] font-black font-display text-[#E92A43] tracking-tighter leading-none opacity-90">
           Counter
         </h2>
       </div>
 
       {/* Interactive Overlapping Content Box */}
-      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-32 relative z-20">
+      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-24 relative z-20">
         <div className="md:col-span-7 bg-white rounded-[2rem] p-4 shadow-2xl border border-dashed border-[#FF7A30]/60">
           <div className="rounded-[1.5rem] overflow-hidden bg-gray-100 aspect-[4/3] relative">
             <img src={REAL_FOOD_IMAGES.soupDetail} alt="Soup analysis view" className="w-full h-full object-cover" />

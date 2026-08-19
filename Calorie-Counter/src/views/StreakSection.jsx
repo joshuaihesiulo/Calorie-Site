@@ -4,10 +4,7 @@ export default function StreakSection() {
   return (
     <section className="bg-[#00F090]/5 py-20 px-6 border-y border-[#00F090]/10">
       <div className="max-w-4xl mx-auto text-center mb-12">
-        <span className="text-[#E92A43] text-xs font-black uppercase tracking-wider">
-          Built for how Nigerians actually eat
-        </span>
-        <h2 className="text-4xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter mt-3">
+        <h2 className="text-3xl md:text-4xl font-black font-display text-[#2C3768] tracking-tighter">
           Scan meals, swap<br />smarter, keep your streak.
         </h2>
       </div>

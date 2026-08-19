@@ -5,7 +5,7 @@ export default function DecodedSection() {
   return (
     <section className="bg-white px-6 py-20 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start mb-12 gap-4">
-        <h2 className="text-4xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter">
+        <h2 className="text-3xl md:text-4xl font-black font-display text-[#2C3768] tracking-tighter">
           Your Food, Decoded
         </h2>
         <p className="text-gray-400 text-xs md:text-sm max-w-xs text-right md:self-end leading-tight font-medium">
