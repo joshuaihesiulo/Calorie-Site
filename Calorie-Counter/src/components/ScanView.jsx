@@ -99,7 +99,7 @@ export default function ScanView() {
 
       <div className="flex items-center justify-between p-5 lg:p-7 border-b border-white/5 z-10 backdrop-blur-md bg-black/40">
         <div className="flex items-center gap-2.5">
-          <button onClick={() => setView('dashboard')} className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/10 transition-all text-white" aria-label="Back to dashboard">
+          <button onClick={() => setView('dashboard')} className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/10 transition-all text-white" aria-label="Back to dashboard">
             <ArrowLeftIcon className="w-4 h-4" />
           </button>
           <span className="text-lg font-black tracking-tight">Scan Plate Visuals</span>

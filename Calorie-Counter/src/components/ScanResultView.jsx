@@ -125,7 +125,7 @@ export default function ScanResultView() {
                 <div className="flex items-center justify-between bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 min-w-[120px]">
                   <button
                     onClick={() => updateResultModifiers({ selectedQuantity: Math.max(0.5, selectedQuantity - 0.5) })}
-                    className="w-8 h-8 rounded-full bg-white/5 font-black text-sm flex items-center justify-center hover:bg-white/10"
+                    className="w-11 h-11 rounded-full bg-white/5 font-black text-base flex items-center justify-center hover:bg-white/10"
                   >
                     -
                   </button>
@@ -134,7 +134,7 @@ export default function ScanResultView() {
                   </span>
                   <button
                     onClick={() => updateResultModifiers({ selectedQuantity: selectedQuantity + 0.5 })}
-                    className="w-8 h-8 rounded-full bg-white/5 font-black text-sm flex items-center justify-center hover:bg-white/10"
+                    className="w-11 h-11 rounded-full bg-white/5 font-black text-base flex items-center justify-center hover:bg-white/10"
                   >
                     +
                   </button>
@@ -212,7 +212,7 @@ export default function ScanResultView() {
           <div className="bg-[#12121A] border border-white/10 rounded-[2rem] p-8 max-w-md w-full relative shadow-2xl text-center">
             <button
               onClick={() => setShowSignInPrompt(false)}
-              className="absolute top-4 right-4 text-[#8A8A9E] hover:text-white"
+              className="absolute top-4 right-4 text-[#8A8A9E] hover:text-white p-2"
               aria-label="Close"
             >
               <XIcon className="w-5 h-5" />

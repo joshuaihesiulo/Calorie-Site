@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { computeStreak, useBoundStore } from '../store/useBoundStore';
 import MealModal from './MealModal';
 import { UserIcon, CheckCircleIcon, XIcon, FlameIcon, UtensilsIcon, PotIcon, PencilIcon, TrashIcon, RepeatIcon, CameraIcon } from './icons';
@@ -114,6 +114,12 @@ export default function DailyDashboardView() {
 
   const bestRun = useMemo(() => bestStreak(loggedMeals), [loggedMeals]);
 
+  useEffect(() => {
+    if (!lastCommittedMeal) return undefined;
+    const timer = setTimeout(dismissLastCommitted, 5000);
+    return () => clearTimeout(timer);
+  }, [lastCommittedMeal, dismissLastCommitted]);
+
   const displayName = user?.name || 'there';
   const selectedMeta = dayOptions.find((d) => d.dateKey === selectedKey);
 
@@ -220,8 +226,8 @@ export default function DailyDashboardView() {
                   onClick={() => setSelectedKey(day.dateKey)}
                   className={
                     active
-                      ? 'border-2 border-[#00F090] px-3 sm:px-4 py-2 rounded-2xl font-black text-xs text-center shadow-sm bg-white flex-shrink-0'
-                      : 'text-xs font-black text-gray-400 flex-shrink-0 px-2 hover:text-[#2C3768] transition-all'
+                      ? 'border-2 border-[#00F090] px-3 sm:px-4 min-h-11 flex items-center justify-center rounded-2xl font-black text-xs text-center shadow-sm bg-white flex-shrink-0'
+                      : 'text-xs font-black text-gray-400 flex-shrink-0 px-2 min-h-11 flex items-center justify-center hover:text-[#2C3768] transition-all'
                   }
                 >
                   {day.label}
@@ -303,12 +309,12 @@ export default function DailyDashboardView() {
             <h3 className="text-sm font-black tracking-tight">{selectedKey === todayKey ? "Today's Food Log" : `Food Log — ${selectedMeta?.fullLabel}`}</h3>
             <div className="flex items-center gap-2">
               {selectedMeals.length > 0 && !comboNaming && (
-                <button onClick={beginComboName} className="bg-[#3CE8E3]/20 hover:bg-[#3CE8E3]/40 border border-[#3CE8E3]/40 text-[#2C3768] text-xs font-black px-3 py-2 rounded-xl transition-all">
+                <button onClick={beginComboName} className="bg-[#3CE8E3]/20 hover:bg-[#3CE8E3]/40 border border-[#3CE8E3]/40 text-[#2C3768] text-xs font-black px-4 py-2.5 rounded-xl transition-all">
                   Save Day as Combo
                 </button>
               )}
               <div className="relative">
-                <button onClick={() => setCombosOpen((open) => !open)} className="bg-white text-[#2C3768] text-xs font-black px-3 py-2 rounded-xl border border-[#2C3768]/20 hover:bg-gray-50 transition-all">
+                <button onClick={() => setCombosOpen((open) => !open)} className="bg-white text-[#2C3768] text-xs font-black px-4 py-2.5 rounded-xl border border-[#2C3768]/20 hover:bg-gray-50 transition-all">
                   Combos {templates.length > 0 ? `(${templates.length})` : ''}
                 </button>
                 {combosOpen && (
@@ -330,14 +336,14 @@ export default function DailyDashboardView() {
                             </div>
                             <button
                               onClick={() => logTemplate(template)}
-                              className="bg-[#2C3768] text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg hover:opacity-90 transition-all"
+                              className="bg-[#2C3768] text-white text-[10px] font-black px-3.5 py-2.5 rounded-lg hover:opacity-90 transition-all"
                             >
                               Log
                             </button>
                             <button
                               onClick={() => deleteTemplate(template.id)}
                               aria-label={`Delete ${template.name}`}
-                              className="text-[#E92A43]/40 hover:text-[#E92A43] transition-all"
+                              className="text-[#E92A43]/40 hover:text-[#E92A43] transition-all min-w-11 min-h-11 flex items-center justify-center"
                             >
                               <TrashIcon className="w-4 h-4" />
                             </button>
@@ -348,7 +354,7 @@ export default function DailyDashboardView() {
                   </>
                 )}
               </div>
-              <button onClick={openAdd} className="bg-[#2C3768] hover:opacity-90 text-white text-xs font-black px-3 py-2 rounded-xl transition-all">
+              <button onClick={openAdd} className="bg-[#2C3768] hover:opacity-90 text-white text-xs font-black px-4 py-2.5 rounded-xl transition-all">
                 + Add Meal
               </button>
             </div>
@@ -379,7 +385,7 @@ export default function DailyDashboardView() {
                   <button
                     key={`${meal.name}-recent`}
                     onClick={() => repeatMeal(meal)}
-                    className="shrink-0 flex items-center gap-1.5 bg-white border border-gray-100 rounded-full px-3 py-1.5 text-[10px] font-black hover:border-[#00F090] transition-all shadow-sm"
+                    className="shrink-0 flex items-center gap-1.5 bg-white border border-gray-100 rounded-full px-3.5 py-2.5 text-[10px] font-black hover:border-[#00F090] transition-all shadow-sm"
                   >
                     <span className="max-w-[110px] truncate">{meal.name}</span>
                     <span className="text-gray-400">{meal.calories} Kcal</span>
@@ -414,21 +420,21 @@ export default function DailyDashboardView() {
                   <button
                     onClick={() => repeatMeal(meal)}
                     title="Log again"
-                    className="text-[#2C3768]/40 hover:text-[#00A86B] text-xs font-black px-1.5 py-1 transition-all"
+                    className="min-w-11 min-h-11 flex items-center justify-center text-[#2C3768]/40 hover:text-[#00A86B] rounded-xl transition-all"
                   >
                     <RepeatIcon className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => openEdit(meal)}
                     title="Edit meal"
-                    className="text-[#2C3768]/40 hover:text-[#2C3768] text-xs font-black px-1.5 py-1 transition-all"
+                    className="min-w-11 min-h-11 flex items-center justify-center text-[#2C3768]/40 hover:text-[#2C3768] rounded-xl transition-all"
                   >
                     <PencilIcon className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => deleteMeal(meal.id)}
                     title="Delete meal"
-                    className="text-[#E92A43]/40 hover:text-[#E92A43] text-xs font-black px-1.5 py-1 transition-all"
+                    className="min-w-11 min-h-11 flex items-center justify-center text-[#E92A43]/40 hover:text-[#E92A43] rounded-xl transition-all"
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>
@@ -458,9 +464,9 @@ export default function DailyDashboardView() {
             </div>
             <p className="text-[11px] font-bold text-gray-400 mb-4">Your progress bar and goal card update instantly.</p>
             <div className="flex items-center justify-center gap-5 mb-5">
-              <button onClick={() => setGoalDraft((value) => Math.max(500, value - 100))} className="w-10 h-10 rounded-xl bg-gray-100 text-lg font-black hover:bg-gray-200 transition-all">−</button>
+              <button onClick={() => setGoalDraft((value) => Math.max(500, value - 100))} className="w-12 h-12 rounded-xl bg-gray-100 text-lg font-black hover:bg-gray-200 transition-all">−</button>
               <span className="text-4xl font-black tracking-tighter">{goalDraft.toLocaleString()}</span>
-              <button onClick={() => setGoalDraft((value) => Math.min(6000, value + 100))} className="w-10 h-10 rounded-xl bg-gray-100 text-lg font-black hover:bg-gray-200 transition-all">+</button>
+              <button onClick={() => setGoalDraft((value) => Math.min(6000, value + 100))} className="w-12 h-12 rounded-xl bg-gray-100 text-lg font-black hover:bg-gray-200 transition-all">+</button>
             </div>
             <div className="flex flex-wrap gap-2 mb-6">
               {GOAL_PRESETS.map((preset) => (

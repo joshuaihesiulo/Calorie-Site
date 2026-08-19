@@ -70,8 +70,8 @@ export default function MealModal({ open, meal, onClose }) {
         className="bg-white rounded-[2.5rem] border-2 border-[#2C3768] p-6 sm:p-8 max-w-md w-full relative shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <button onClick={onClose} className="absolute top-4 right-4 text-[#2C3768] hover:opacity-70" aria-label="Close dialog">
-          <XIcon className="w-5 h-5" />
+        <button onClick={onClose} className="absolute top-4 right-4 text-[#2C3768] hover:opacity-70 p-2" aria-label="Close dialog">
+          <XIcon className="w-6 h-6" />
         </button>
         <h3 className="text-2xl font-black tracking-tight mb-1">{editing ? 'Edit Meal' : 'Add Meal'}</h3>
         <p className="text-gray-500 text-sm font-medium mb-5">Pick a dish from our catalog or enter the details manually.</p>
@@ -93,7 +93,7 @@ export default function MealModal({ open, meal, onClose }) {
                       setQuery('');
                       setName(item.name);
                     }}
-                    className="w-full text-left px-4 py-2.5 hover:bg-[#00F090]/10 text-xs font-bold flex items-center justify-between gap-2"
+                    className="w-full text-left px-4 py-3 hover:bg-[#00F090]/10 text-xs font-bold flex items-center justify-between gap-2"
                   >
                     <span className="truncate">{item.name}</span>
                     <span className="text-gray-400 whitespace-nowrap">{Number(item.calories_per_100g) || 0} kcal/100g{item.source === 'dish' ? '· Dish' : ''}</span>
