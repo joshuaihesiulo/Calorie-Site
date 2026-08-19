@@ -21,18 +21,12 @@ export default function App() {
   const waitlistOpen = useBoundStore((state) => state.waitlistOpen);
   const toggleWaitlist = useBoundStore((state) => state.toggleWaitlist);
   const currentView = useBoundStore((state) => state.currentView);
-  const setView = useBoundStore((state) => state.setView);
   const isAuthenticated = useBoundStore((state) => state.isAuthenticated);
 
   useEffect(() => {
     const unsubscribe = watchAuthState((user) => useBoundStore.getState().setAuthUser(user));
     return unsubscribe;
   }, []);
-
-  const goToPortal = () => {
-    const { isAuthenticated: authed } = useBoundStore.getState();
-    setView(authed ? 'dashboard' : 'signin');
-  };
 
   // Signed-in users never see the auth screens — route them straight to their dashboard.
   const effectiveView =
@@ -46,28 +40,6 @@ export default function App() {
         <main>
           <div className="relative">
             <HeroSection />
-            <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
-              <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 px-6">
-                <div className="lg:col-span-6 lg:col-start-4 text-center flex flex-col items-center">
-                  <div className="mt-[27.5rem] sm:mt-[21.5rem] flex flex-col sm:flex-row gap-4 w-full justify-center pointer-events-auto">
-                    <button 
-                      onClick={goToPortal}
-                      className="bg-transparent text-transparent pointer-events-auto w-full sm:w-52 h-14 cursor-pointer rounded-2xl"
-                      title="Launch App Workspace"
-                    >
-                      Sign Up Trigger Intercept
-                    </button>
-                    <button 
-                      onClick={() => setView('signin')}
-                      className="bg-transparent text-transparent pointer-events-auto w-full sm:w-52 h-14 cursor-pointer rounded-2xl"
-                      title="Login Portal"
-                    >
-                      Sign In Trigger Intercept
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
           
           <ProblemSection />

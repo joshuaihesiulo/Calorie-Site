@@ -1,6 +1,10 @@
 import { REAL_FOOD_IMAGES } from '../constants/images';
+import { useBoundStore } from '../store/useBoundStore';
 
 export default function HeroSection() {
+  const setView = useBoundStore((state) => state.setView);
+  const isAuthenticated = useBoundStore((state) => state.isAuthenticated);
+  const goToPortal = () => setView(isAuthenticated ? 'dashboard' : 'signin');
   return (
     <section className="relative min-h-[90vh] bg-white px-6 py-12 flex flex-col items-center justify-center overflow-hidden">
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
@@ -24,10 +28,16 @@ export default function HeroSection() {
             Snap amala, jollof, suya, egusi, moi moi, or plantain and get instant calories, macros, and portion guidance built for African plates.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-            <button className="bg-[#E92A43] text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_20px_rgba(233,42,67,0.3)] hover:translate-y-[-2px] transition-all">
+            <button
+              onClick={() => setView('scan')}
+              className="bg-[#E92A43] text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_20px_rgba(233,42,67,0.3)] hover:translate-y-[-2px] transition-all cursor-pointer active:scale-[0.98]"
+            >
               Scan your plate
             </button>
-            <button className="bg-[#FFF4CA] border border-[#2C3768]/20 text-[#2C3768] font-bold px-8 py-4 rounded-2xl hover:bg-opacity-80 transition-all">
+            <button
+              onClick={goToPortal}
+              className="bg-[#FFF4CA] border border-[#2C3768]/20 text-[#2C3768] font-bold px-8 py-4 rounded-2xl hover:bg-opacity-80 transition-all cursor-pointer active:scale-[0.98]"
+            >
               See food library
             </button>
           </div>
