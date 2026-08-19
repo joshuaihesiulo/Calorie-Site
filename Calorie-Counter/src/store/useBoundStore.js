@@ -244,11 +244,14 @@ export const useBoundStore = create((set, get) => ({
 
   analyzeFoodImage: async (base64Image) => {
     set({ scanLoading: true, scanError: null, capturedImageSrc: base64Image });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 90000);
     try {
       const res = await fetch('/api/analyze-plate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64Image }),
+        signal: controller.signal,
       });
       if (!res.ok) {
         let message = 'Analysis failed';
@@ -267,14 +270,22 @@ export const useBoundStore = create((set, get) => ({
         scannedCount: get().scannedCount + 1,
       });
     } catch (err) {
+      const aborted = err?.name === 'AbortError';
       const isNetworkError =
-        !(err instanceof Error) || err.name === 'TypeError' || /failed to fetch|network/i.test(err.message || '');
+        aborted ||
+        !(err instanceof Error) ||
+        err.name === 'TypeError' ||
+        /failed to fetch|network/i.test(err.message || '');
       set({
         scanLoading: false,
         scanError: isNetworkError
-          ? 'Cannot reach the analysis server. In local dev, start it with backend\\start-server.cmd (or run npm run dev:all). Press Retry scan to try again.'
+          ? aborted
+            ? 'The analysis server took too long (serverless functions can take up to ~60s for AI vision analysis). Try again — retries are faster after the first warm-up call.'
+            : 'Cannot reach the analysis server. In local dev, start it with backend\\start-server.cmd (or run npm run dev:all). Press Retry scan to try again.'
           : err.message || 'An issue occurred during analysis.',
       });
+    } finally {
+      clearTimeout(timer);
     }
   },
 

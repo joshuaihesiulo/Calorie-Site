@@ -21,7 +21,7 @@ export default function ScanView() {
 
   const checkBackend = () => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
+    const timer = setTimeout(() => controller.abort(), 20000);
     fetch('/api/health', { signal: controller.signal })
       .then((res) => setBackendOnline(res.ok))
       .catch(() => setBackendOnline(false))
