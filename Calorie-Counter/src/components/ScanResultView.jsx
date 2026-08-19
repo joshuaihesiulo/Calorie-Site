@@ -160,6 +160,12 @@ export default function ScanResultView() {
                         {d.faoResult?.source === 'package_label' && (
                           <span className="text-[#00F090]"> · Package Label</span>
                         )}
+                        {d.faoResult?.source === 'manufacturer_label' && (
+                          <span className="text-[#00F090]"> · Manufacturer Label · Verified</span>
+                        )}
+                        {d.faoResult?.source === 'crowdsourced' && (
+                          <span className="text-amber-400"> · Crowdsourced (unverified)</span>
+                        )}
                       </span>
                     </div>
                     <span className="text-sm font-black text-[#00F090] flex-shrink-0">{d.calories} Kcal</span>

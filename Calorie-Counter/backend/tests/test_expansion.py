@@ -29,16 +29,27 @@ EXPANDED_DISH_KEYS = [
 ]
 
 EXPANDED_SNACK_KEYS = [
-    "gala_chicken_roll",
-    "beloxxi_milk_biscuit",
     "indomie_chicken_noodles",
-    "peak_evaporated_milk",
+    "gala_chicken_roll",
+    "peak_instant_milk_powder",
     "maltina_malt_drink",
-    "coca_cola_50cl",
-    "bigi_cola_50cl",
-    "five_alive_pineapple_330ml",
+    "beloxxi_cream_crackers",
+    "amstel_malta_ultra",
+    "cadbury_bournvita",
     "milo_tin_powder",
-    "lacasera_pineapple_35cl",
+    "minimie_chin_chin",
+    "pure_bliss_milk_cookies",
+    "pure_bliss_milk_cream_wafer",
+    "superbite_sausage_roll",
+    "yale_cabin_biscuits",
+    "oxford_coaster_biscuits",
+    "hollandia_yoghurt",
+    "chivita_orange_juice",
+    "lacasera_apple_drink",
+    "viju_milk_drink",
+    "bigi_cola_50cl",
+    "coca_cola_50cl",
+    "five_alive_pineapple_330ml",
 ]
 
 
@@ -93,7 +104,7 @@ class TestCuratedSnacks:
         for key in EXPANDED_SNACK_KEYS:
             profile = lookup_direct_fao(key)
             assert profile is not None, f"{key} did not resolve"
-            assert profile["source"] == "package_label"
+            assert profile["source"] in ("manufacturer_label", "package_label", "crowdsourced")
             assert profile["serving_grams"] > 0, f"{key} missing serving_grams"
             assert profile["calories_per_100g"] > 0, f"{key} missing calories"
 
@@ -110,8 +121,27 @@ class TestCuratedSnacks:
         )
         entry = result["resolved_dishes"][0]
         assert entry["resolution_method"] == "direct"
-        assert entry["fao_result"]["source"] == "package_label"
+        assert entry["fao_result"]["source"] == "manufacturer_label"
+        assert entry["fao_result"]["verified"] is True
         assert entry["fao_result"]["key"] == "gala_chicken_roll"
+
+    def test_verified_flag_contract(self) -> None:
+        verified = {
+            "indomie_chicken_noodles",
+            "gala_chicken_roll",
+            "peak_instant_milk_powder",
+            "maltina_malt_drink",
+            "beloxxi_cream_crackers",
+            "amstel_malta_ultra",
+            "cadbury_bournvita",
+            "milo_tin_powder",
+        }
+        for key in EXPANDED_SNACK_KEYS:
+            profile = lookup_direct_fao(key)
+            assert profile is not None
+            assert profile["verified"] == (key in verified), (
+                f"{key} verified flag does not match curated list"
+            )
 
 
 # ---------------------------------------------------------------------------
