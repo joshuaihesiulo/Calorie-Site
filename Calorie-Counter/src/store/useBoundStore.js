@@ -6,7 +6,7 @@ import {
   signOut as firebaseSignOut,
   getAuthErrorMessage,
 } from '../firebase/auth';
-import { loadMealsFromFirestore, saveMealsToFirestore } from '../firebase/firestore';
+import { loadUserDoc, saveUserDoc } from '../firebase/firestore';
 
 export function plateTotals(data) {
   const quantity = Number(data?.selectedQuantity) || 1;
@@ -34,6 +34,10 @@ export function primaryDishName(data) {
  * ------------------------------------------------------------------------- */
 
 const MEALS_STORAGE_KEY = (uid) => `naija_meals_${uid || 'guest'}`;
+const GOAL_STORAGE_KEY = (uid) => `naija_goal_${uid || 'guest'}`;
+const TEMPLATES_STORAGE_KEY = (uid) => `naija_templates_${uid || 'guest'}`;
+
+export const DEFAULT_CALORIE_GOAL = 2400;
 
 function toDateKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -93,6 +97,51 @@ function saveMealsForUser(uid, meals) {
   }
 }
 
+function loadGoalForUser(uid) {
+  try {
+    const value = Number(localStorage.getItem(GOAL_STORAGE_KEY(uid)));
+    return Number.isFinite(value) && value > 0 ? value : DEFAULT_CALORIE_GOAL;
+  } catch {
+    return DEFAULT_CALORIE_GOAL;
+  }
+}
+
+function saveGoalForUser(uid, goal) {
+  try {
+    localStorage.setItem(GOAL_STORAGE_KEY(uid), String(goal));
+  } catch {
+    // storage unavailable — keep goal in memory only
+  }
+}
+
+function normalizeTemplateList(list) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((template) => ({
+      id: template?.id || uniqueId(),
+      name: String(template?.name || 'Combo'),
+      meals: Array.isArray(template?.meals) ? template.meals : [],
+      createdAt: template?.createdAt || new Date().toISOString(),
+    }))
+    .filter((template) => template.meals.length > 0);
+}
+
+function loadTemplatesForUser(uid) {
+  try {
+    return normalizeTemplateList(JSON.parse(localStorage.getItem(TEMPLATES_STORAGE_KEY(uid))));
+  } catch {
+    return [];
+  }
+}
+
+function saveTemplatesForUser(uid, templates) {
+  try {
+    localStorage.setItem(TEMPLATES_STORAGE_KEY(uid), JSON.stringify(templates));
+  } catch {
+    // storage unavailable — keep templates in memory only
+  }
+}
+
 /* Consecutive-day logging streak. Alive while today OR yesterday is logged. */
 export function computeStreak(meals) {
   const days = new Set((meals || []).map((meal) => meal.dateKey).filter(Boolean));
@@ -136,6 +185,10 @@ export const useBoundStore = create((set, get) => ({
   // Last meal committed from a scan — drives the "add another serving" shortcut
   lastCommittedMeal: null,
 
+  // User settings (persisted per-user)
+  calorieGoal: DEFAULT_CALORIE_GOAL,
+  templates: [],
+
   toggleWaitlist: () => set((state) => ({ waitlistOpen: !state.waitlistOpen })),
   setView: (view) => set({ currentView: view }),
 
@@ -150,6 +203,8 @@ export const useBoundStore = create((set, get) => ({
         authLoading: false,
         authError: null,
         loggedMeals: loadMealsForUser(user.uid),
+        calorieGoal: loadGoalForUser(user.uid),
+        templates: loadTemplatesForUser(user.uid),
         currentView: redirect || (isOnAuthPage ? 'dashboard' : state.currentView),
         authRedirectView: null,
       });
@@ -181,6 +236,8 @@ export const useBoundStore = create((set, get) => ({
         authLoading: false,
         authRedirectView: null,
         loggedMeals: loadMealsForUser(user.uid),
+        calorieGoal: loadGoalForUser(user.uid),
+        templates: loadTemplatesForUser(user.uid),
         currentView: redirect || 'dashboard',
       });
       hydrateFromFirestore(user.uid);
@@ -200,6 +257,8 @@ export const useBoundStore = create((set, get) => ({
         authLoading: false,
         authRedirectView: null,
         loggedMeals: loadMealsForUser(user.uid),
+        calorieGoal: loadGoalForUser(user.uid),
+        templates: loadTemplatesForUser(user.uid),
         currentView: redirect || 'dashboard',
       });
       hydrateFromFirestore(user.uid);
@@ -219,6 +278,8 @@ export const useBoundStore = create((set, get) => ({
         authLoading: false,
         authRedirectView: null,
         loggedMeals: loadMealsForUser(user.uid),
+        calorieGoal: loadGoalForUser(user.uid),
+        templates: loadTemplatesForUser(user.uid),
         currentView: redirect || 'dashboard',
       });
       hydrateFromFirestore(user.uid);
@@ -364,6 +425,64 @@ export const useBoundStore = create((set, get) => ({
   },
 
   dismissLastCommitted: () => set({ lastCommittedMeal: null }),
+
+  setGoal: (goal) => {
+    const clamped = Math.min(6000, Math.max(500, Math.round(Number(goal) || DEFAULT_CALORIE_GOAL)));
+    const { user } = get();
+    saveGoalForUser(user?.uid, clamped);
+    if (user?.uid) {
+      saveUserDoc(user.uid, { goal: clamped }).catch(() => {
+        // Firestore unavailable — localStorage already saved
+      });
+    }
+    set({ calorieGoal: clamped });
+  },
+
+  repeatMeal: (meal) => {
+    if (!meal) return;
+    const entry = buildMeal({ name: meal.name, calories: meal.calories, grams: meal.grams });
+    const meals = [entry, ...get().loggedMeals];
+    persistMeals(meals);
+    set({ loggedMeals: meals, lastCommittedMeal: entry });
+  },
+
+  addTemplate: (name, dayMeals) => {
+    const cleanName = String(name || '').trim();
+    const entries = (dayMeals || [])
+      .filter((m) => m && m.name && Number(m.calories) > 0)
+      .map((m) => ({
+        name: m.name,
+        calories: Math.round(Number(m.calories) || 0),
+        grams: Math.round(Number(m.grams) || 0),
+      }));
+    if (!cleanName || !entries.length) return;
+    const template = {
+      id: uniqueId(),
+      name: cleanName,
+      meals: entries,
+      createdAt: new Date().toISOString(),
+    };
+    const templates = [template, ...get().templates];
+    persistTemplates(templates);
+    set({ templates });
+  },
+
+  deleteTemplate: (id) => {
+    const templates = get().templates.filter((t) => t.id !== id);
+    persistTemplates(templates);
+    set({ templates });
+  },
+
+  logTemplate: (template) => {
+    if (!template?.meals?.length) return;
+    const created = new Date();
+    const entries = template.meals.map((m) =>
+      buildMeal({ name: m.name, calories: m.calories, grams: m.grams, createdAt: created })
+    );
+    const meals = [...entries, ...get().loggedMeals];
+    persistMeals(meals);
+    set({ loggedMeals: meals, lastCommittedMeal: entries[0] });
+  },
 }));
 
 /* ---------------------------------------------------------------------------
@@ -374,18 +493,38 @@ function persistMeals(meals) {
   const { user } = useBoundStore.getState();
   saveMealsForUser(user?.uid, meals);
   if (user?.uid) {
-    saveMealsToFirestore(user.uid, meals).catch(() => {
+    saveUserDoc(user.uid, { meals }).catch(() => {
       // Firestore unavailable (not created / offline) — localStorage already saved
     });
   }
 }
 
+function persistTemplates(templates) {
+  const { user } = useBoundStore.getState();
+  saveTemplatesForUser(user?.uid, templates);
+  if (user?.uid) {
+    saveUserDoc(user.uid, { templates }).catch(() => {
+      // Firestore unavailable — localStorage already saved
+    });
+  }
+}
+
 function hydrateFromFirestore(uid) {
-  loadMealsFromFirestore(uid)
+  loadUserDoc(uid)
     .then((remote) => {
-      if (!Array.isArray(remote)) return;
-      useBoundStore.getState().hydrateMeals(remote);
-      saveMealsForUser(uid, remote);
+      if (!remote) return;
+      if (Array.isArray(remote.meals)) {
+        useBoundStore.getState().hydrateMeals(remote.meals);
+        saveMealsForUser(uid, remote.meals);
+      }
+      if (Number.isFinite(Number(remote.goal)) && Number(remote.goal) >= 500) {
+        useBoundStore.getState().setGoal(remote.goal);
+      }
+      if (Array.isArray(remote.templates)) {
+        const templates = normalizeTemplateList(remote.templates);
+        useBoundStore.setState({ templates });
+        saveTemplatesForUser(uid, templates);
+      }
     })
     .catch(() => {
       // Firestore unavailable — local storage copy stays authoritative

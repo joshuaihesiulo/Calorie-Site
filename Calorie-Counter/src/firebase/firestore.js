@@ -1,7 +1,8 @@
-/* Firestore persistence for the per-user food diary.
+/* Firestore persistence for the per-user food diary and settings.
  *
- * The whole meal list is stored in one document per user (userMeals/{uid}).
- * Designed for bootcamp-scale traffic; every mutation rewrites the list.
+ * Everything for one user lives in a single document (userMeals/{uid}):
+ * meals, calorie goal, and meal templates. Designed for bootcamp-scale
+ * traffic; every mutation merges a patch into that document.
  * All functions degrade gracefully — callers treat failures as "local
  * storage only" rather than breaking the app.
  */
@@ -11,13 +12,12 @@ import { app } from './config';
 
 const db = getFirestore(app);
 
-export async function loadMealsFromFirestore(uid) {
+export async function loadUserDoc(uid) {
   const snapshot = await getDoc(doc(db, 'userMeals', uid));
   if (!snapshot.exists()) return null;
-  const meals = snapshot.data()?.meals;
-  return Array.isArray(meals) ? meals : null;
+  return snapshot.data();
 }
 
-export async function saveMealsToFirestore(uid, meals) {
-  await setDoc(doc(db, 'userMeals', uid), { meals }, { merge: true });
+export async function saveUserDoc(uid, patch) {
+  await setDoc(doc(db, 'userMeals', uid), patch, { merge: true });
 }
