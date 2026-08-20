@@ -1,45 +1,262 @@
 {
-  "jollof_rice": ["jollof"],
-  "fried_rice": ["special fried rice"],
-  "egusi_soup": ["egusi"],
-  "oha_soup": ["oha"],
-  "efo_riro": ["efo", "efo riro stew"],
-  "pounded_yam": ["iyan", "pounded yam & egusi"],
-  "amala": ["amala yun", "amala and ewedu"],
-  "eba": ["garri", "garri eba"],
-  "fried_plantain": ["dodo", "fried ripe plantain", "dodo & beans"],
-  "boli": ["roasted plantain", "boiled plantain"],
-  "moin_moin": ["moimoi", "moi moi", "moi-moi"],
-  "akara": ["kosai", "bean cake"],
-  "suya": ["beef suya", "chicken suya", "suya sticks"],
-  "goat_meat_pepper_soup": ["pepper soup"],
-  "masa": ["waina", "masa rice"],
-  "chin_chin": ["chin-chin"],
-  "puff_puff": ["puff-puff", "bofo"],
-  "meat_pie": ["beef meat pie"],
-  "egg_roll": ["egg roll bread"],
-  "scotch_egg": ["scotch egg"],
-  "potato_chips": ["potato crisps", "crisps", "lays", "pringles"],
-  "plantain_chips": ["plantain crisps"],
-  "gala_chicken_roll": ["gala", "gala classic", "sausage roll"],
-  "indomie_chicken_noodles": ["indomie", "instant noodles", "noodles"],
-  "peak_instant_milk_powder": ["peak milk", "peak", "milk powder"],
-  "maltina_malt_drink": ["maltina", "maltina classic"],
-  "beloxxi_cream_crackers": ["beloxxi", "beloxxi biscuit", "cream crackers"],
-  "amstel_malta_ultra": ["amstel", "amstel malta", "malta"],
-  "cadbury_bournvita": ["bournvita", "cadbury bournvita"],
-  "milo_tin_powder": ["milo"],
-  "minimie_chin_chin": ["minimie", "minimie chin chin"],
-  "pure_bliss_milk_cookies": ["pure bliss", "pure bliss cookies"],
-  "pure_bliss_milk_cream_wafer": ["pure bliss wafer"],
-  "superbite_sausage_roll": ["superbite"],
-  "yale_cabin_biscuits": ["yale", "yale cabin"],
-  "oxford_coaster_biscuits": ["oxford", "oxford coaster"],
-  "hollandia_yoghurt": ["hollandia", "hollandia yoghurt"],
-  "chivita_orange_juice": ["chivita", "chivita orange juice"],
-  "lacasera_apple_drink": ["lacasera", "la casera"],
-  "viju_milk_drink": ["viju", "viju apple"],
-  "bigi_cola_50cl": ["bigi", "bigi cola"],
-  "coca_cola_50cl": ["coca cola", "coke", "coke 50cl"],
-  "five_alive_pineapple_330ml": ["5 alive", "five alive"]
+  "jollof_rice": [
+    "jollof"
+  ],
+  "fried_rice": [
+    "special fried rice"
+  ],
+  "egusi_soup": [
+    "egusi"
+  ],
+  "oha_soup": [
+    "oha"
+  ],
+  "efo_riro": [
+    "efo",
+    "efo riro stew"
+  ],
+  "pounded_yam": [
+    "iyan",
+    "pounded yam & egusi"
+  ],
+  "amala": [
+    "amala yun",
+    "amala and ewedu"
+  ],
+  "eba": [
+    "garri",
+    "garri eba"
+  ],
+  "fried_plantain": [
+    "dodo",
+    "fried ripe plantain",
+    "dodo & beans"
+  ],
+  "boli": [
+    "roasted plantain",
+    "boiled plantain"
+  ],
+  "moin_moin": [
+    "moimoi",
+    "moi moi",
+    "moi-moi"
+  ],
+  "akara": [
+    "kosai",
+    "bean cake"
+  ],
+  "suya": [
+    "beef suya",
+    "chicken suya",
+    "suya sticks"
+  ],
+  "goat_meat_pepper_soup": [
+    "pepper soup"
+  ],
+  "masa": [
+    "waina",
+    "masa rice"
+  ],
+  "chin_chin": [
+    "chin-chin"
+  ],
+  "puff_puff": [
+    "puff-puff",
+    "bofo"
+  ],
+  "meat_pie": [
+    "beef meat pie"
+  ],
+  "egg_roll": [
+    "egg roll bread"
+  ],
+  "scotch_egg": [
+    "scotch egg"
+  ],
+  "potato_chips": [
+    "potato crisps",
+    "crisps",
+    "lays",
+    "pringles"
+  ],
+  "plantain_chips": [
+    "plantain crisps"
+  ],
+  "gala_chicken_roll": [
+    "gala",
+    "gala classic",
+    "sausage roll"
+  ],
+  "indomie_chicken_noodles": [
+    "indomie",
+    "instant noodles",
+    "noodles"
+  ],
+  "peak_instant_milk_powder": [
+    "peak milk",
+    "peak",
+    "milk powder"
+  ],
+  "maltina_malt_drink": [
+    "maltina",
+    "maltina classic"
+  ],
+  "beloxxi_cream_crackers": [
+    "beloxxi",
+    "beloxxi biscuit",
+    "cream crackers"
+  ],
+  "amstel_malta_ultra": [
+    "amstel",
+    "amstel malta",
+    "malta"
+  ],
+  "cadbury_bournvita": [
+    "bournvita",
+    "cadbury bournvita"
+  ],
+  "milo_tin_powder": [
+    "milo"
+  ],
+  "minimie_chin_chin": [
+    "minimie",
+    "minimie chin chin"
+  ],
+  "pure_bliss_milk_cookies": [
+    "pure bliss",
+    "pure bliss cookies"
+  ],
+  "pure_bliss_milk_cream_wafer": [
+    "pure bliss wafer"
+  ],
+  "superbite_sausage_roll": [
+    "superbite"
+  ],
+  "yale_cabin_biscuits": [
+    "yale",
+    "yale cabin"
+  ],
+  "oxford_coaster_biscuits": [
+    "oxford",
+    "oxford coaster"
+  ],
+  "hollandia_yoghurt": [
+    "hollandia",
+    "hollandia yoghurt"
+  ],
+  "chivita_orange_juice": [
+    "chivita",
+    "chivita orange juice"
+  ],
+  "lacasera_apple_drink": [
+    "lacasera",
+    "la casera"
+  ],
+  "viju_milk_drink": [
+    "viju",
+    "viju apple"
+  ],
+  "bigi_cola_50cl": [
+    "bigi",
+    "bigi cola",
+    "big cola"
+  ],
+  "coca_cola_50cl": [
+    "coca cola",
+    "coke",
+    "coke 50cl"
+  ],
+  "five_alive_pineapple_330ml": [
+    "5 alive",
+    "five alive"
+  ],
+  "parle_7to7": [
+    "7 to 7",
+    "parle 7 to 7",
+    "seven to seven"
+  ],
+  "parle_all_butter_cake": [
+    "all butter",
+    "all butter cake"
+  ],
+  "mcvities_digestive_fibre": [
+    "digestive",
+    "mcvities",
+    "digestive fibre"
+  ],
+  "parle_fab": [
+    "fab",
+    "parle fab"
+  ],
+  "yatee_grab_and_go": [
+    "grab and go",
+    "yatee",
+    "x-treme"
+  ],
+  "parle_milk_power": [
+    "milk power",
+    "parle milk power"
+  ],
+  "yale_spicy_fish_biscuit": [
+    "spicy fish",
+    "fish biscuit",
+    "spicy fish biscuit"
+  ],
+  "parle_top_biscuit": [
+    "top biscuit",
+    "parle top",
+    "top"
+  ],
+  "festo_espresso": [
+    "festo",
+    "espresso",
+    "black coffee"
+  ],
+  "milk_bread_milk_coffee": [
+    "milk bread coffee",
+    "milk coffee"
+  ],
+  "seven_up_500ml": [
+    "7up",
+    "seven up"
+  ],
+  "american_cola_600ml": [
+    "american cola"
+  ],
+  "beta_malt_330ml": [
+    "beta malt",
+    "beta"
+  ],
+  "bigi_spirite_500ml": [
+    "spirite",
+    "big spirite",
+    "bigi sprite"
+  ],
+  "bigi_apple_500ml": [
+    "bigi apple",
+    "big apple"
+  ],
+  "fanta_500ml": [
+    "fanta"
+  ],
+  "nutri_milk_500ml": [
+    "nutri milk",
+    "nutri-milk"
+  ],
+  "nutri_yo_500ml": [
+    "nutri yo",
+    "nutriyo",
+    "yo drink"
+  ],
+  "pepsi_500ml": [
+    "pepsi"
+  ],
+  "razzl_orange_330ml": [
+    "razzl",
+    "razzl orange"
+  ],
+  "smoov_chapman_500ml": [
+    "smoov",
+    "chapman"
+  ]
 }

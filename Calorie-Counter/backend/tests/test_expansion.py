@@ -47,8 +47,31 @@ EXPANDED_SNACK_KEYS = [
     "chivita_orange_juice",
     "lacasera_apple_drink",
     "viju_milk_drink",
+    "beloxxi_cream_crackers_26g",
+    "beloxxi_cream_crackers_52g",
+    "parle_7to7",
+    "parle_all_butter_cake",
+    "mcvities_digestive_fibre",
+    "parle_fab",
+    "yatee_grab_and_go",
+    "parle_milk_power",
+    "yale_spicy_fish_biscuit",
+    "parle_top_biscuit",
+    "festo_espresso",
+    "milk_bread_milk_coffee",
+    "seven_up_500ml",
+    "american_cola_600ml",
+    "beta_malt_330ml",
     "bigi_cola_50cl",
+    "bigi_spirite_500ml",
+    "bigi_apple_500ml",
     "coca_cola_50cl",
+    "fanta_500ml",
+    "nutri_milk_500ml",
+    "nutri_yo_500ml",
+    "pepsi_500ml",
+    "razzl_orange_330ml",
+    "smoov_chapman_500ml",
     "five_alive_pineapple_330ml",
 ]
 
@@ -126,16 +149,20 @@ class TestCuratedSnacks:
         assert entry["fao_result"]["key"] == "gala_chicken_roll"
 
     def test_verified_flag_contract(self) -> None:
-        verified = {
-            "indomie_chicken_noodles",
-            "gala_chicken_roll",
-            "peak_instant_milk_powder",
-            "maltina_malt_drink",
-            "beloxxi_cream_crackers",
-            "amstel_malta_ultra",
-            "cadbury_bournvita",
-            "milo_tin_powder",
+        unverified = {
+            "five_alive_pineapple_330ml",
+            "minimie_chin_chin",
+            "pure_bliss_milk_cookies",
+            "pure_bliss_milk_cream_wafer",
+            "superbite_sausage_roll",
+            "yale_cabin_biscuits",
+            "oxford_coaster_biscuits",
+            "hollandia_yoghurt",
+            "chivita_orange_juice",
+            "lacasera_apple_drink",
+            "viju_milk_drink",
         }
+        verified = set(EXPANDED_SNACK_KEYS) - unverified
         for key in EXPANDED_SNACK_KEYS:
             profile = lookup_direct_fao(key)
             assert profile is not None
