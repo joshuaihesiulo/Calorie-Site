@@ -135,8 +135,12 @@ def check_fao_match(state: PlateState) -> dict[str, Any]:
     if result is None:
         return {"action": "check_verified_snack"}
 
+    entry = _resolved_entry(dish, "direct", result, confidence=0.95)
+    if result.get("serving_grams") and result.get("verified"):
+        entry["estimatedGrams"] = float(result["serving_grams"])
+
     return {
-        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "direct", result, confidence=0.95)],
+        "resolved_dishes": [*state["resolved_dishes"], entry],
         "logs": [*state["logs"], f"[DIRECT] '{dish['dishKey']}' resolved by exact FAO match"],
         "action": "advance_index",
     }
