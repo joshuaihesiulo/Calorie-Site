@@ -173,8 +173,6 @@ def lookup_direct_fao(key: str) -> dict | None:
 
     food = next((f for f in _foods if _normalize(f["name"]) == wanted), None)
     if food is None:
-        food = next((f for f in _foods if wanted in _normalize(f["name"])), None)
-    if food is None:
         return None
 
     return {
@@ -187,3 +185,58 @@ def lookup_direct_fao(key: str) -> dict | None:
         "fat_per_100g": food.get("fat_per_100g"),
         "fiber_per_100g": food.get("fiber_per_100g"),
     }
+
+
+def get_verified_snack(dish_key: str) -> dict | None:
+    """Look up a verified manufacturer-labeled snack by dish key.
+
+    Returns the snack's per-100g profile if found with ``verified=true``
+    and ``source=manufacturer_label``, or ``None`` otherwise.
+    Supports exact match and prefix match (e.g. "beloxxi_crackers" matches
+    "beloxxi_cream_crackers_52g").
+    """
+    _ensure_loaded()
+    wanted = _normalize(dish_key)
+
+    # 1. Exact match
+    snack_key = next((k for k in _snacks if _normalize(k) == wanted), None)
+    if snack_key is not None:
+        snack = _snacks[snack_key]
+        if snack.get("verified") and snack.get("source") == "manufacturer_label":
+            return {
+                "key": snack_key,
+                "name": snack["name"],
+                "source": "manufacturer_label",
+                "calories_per_100g": snack.get("calories_per_100g"),
+                "protein_per_100g": snack.get("protein_per_100g"),
+                "carbs_per_100g": snack.get("carbs_per_100g"),
+                "fat_per_100g": snack.get("fat_per_100g"),
+                "fiber_per_100g": snack.get("fiber_per_100g"),
+                "serving_grams": snack.get("serving_grams"),
+                "serving_label": snack.get("serving_label"),
+                "brand": snack.get("brand"),
+                "verified": True,
+            }
+        return None
+
+    # 2. Prefix match: dish key starts with a known snack key
+    for key, snack in _snacks.items():
+        if not snack.get("verified") or snack.get("source") != "manufacturer_label":
+            continue
+        if wanted.startswith(_normalize(key)):
+            return {
+                "key": key,
+                "name": snack["name"],
+                "source": "manufacturer_label",
+                "calories_per_100g": snack.get("calories_per_100g"),
+                "protein_per_100g": snack.get("protein_per_100g"),
+                "carbs_per_100g": snack.get("carbs_per_100g"),
+                "fat_per_100g": snack.get("fat_per_100g"),
+                "fiber_per_100g": snack.get("fiber_per_100g"),
+                "serving_grams": snack.get("serving_grams"),
+                "serving_label": snack.get("serving_label"),
+                "brand": snack.get("brand"),
+                "verified": True,
+            }
+
+    return None

@@ -1,18 +1,20 @@
 """LangGraph dish resolution (Phase 3).
 
-Routes each detected dish through up to four resolution checks, then
+Routes each detected dish through up to five resolution checks, then
 aggregates plate totals:
 
-    START -> check_fao_match -> fuzzy_match_dish -> ai_reclassify_dish
-          -> check_off_match (OFF API, packaged items only)
-          -> mark_unresolved -> advance_index (loop) -> aggregate_nutrients -> END
+    START -> check_fao_match -> check_verified_snack (packaged only)
+          -> fuzzy_match_dish -> check_off_match (packaged only)
+          -> ai_reclassify_dish -> mark_unresolved -> advance_index (loop)
+          -> aggregate_nutrients -> END
 
 Each dish in ``raw_dishes`` is processed one per loop iteration, advancing
 ``current_index`` until every dish is done. ``action`` is an internal state
 field used only for conditional routing between nodes. Items Gemini flagged
-as packaged (``isPackaged`` / ``brandHint``) that no local dataset or LLM
-could resolve get one live Open Food Facts query; the node returns quickly
-without network I/O for everything else.
+as packaged (``isPackaged`` / ``brandHint``) that match a verified
+manufacturer label in ``snacks.json`` are resolved immediately with exact
+label values. Packaged items not found locally get one live Open Food Facts
+query before falling back to AI reclassification.
 """
 
 from __future__ import annotations
@@ -24,13 +26,13 @@ from typing import Any, TypedDict
 from rapidfuzz import fuzz, process
 
 from app.services import providers
-from app.services.fao_lookup import get_all_known_keys, lookup_direct_fao
+from app.services.fao_lookup import get_all_known_keys, get_verified_snack, lookup_direct_fao
 from app.services.nutrition_router import resolve_food_item
 from app.services.vision import KNOWN_KEYS
 
 logger = logging.getLogger(__name__)
 
-FUZZY_THRESHOLD = 75
+FUZZY_THRESHOLD = 85
 
 # Cap on FAO names offered to the reclassification LLM per dish (in addition
 # to the curated vision keys). Feeding the full ~1k key space blows past Groq
@@ -131,11 +133,31 @@ def check_fao_match(state: PlateState) -> dict[str, Any]:
     dish = _current_dish(state)
     result = lookup_direct_fao(dish["dishKey"])
     if result is None:
-        return {"action": "fuzzy_match_dish"}
+        return {"action": "check_verified_snack"}
 
     return {
         "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "direct", result, confidence=0.95)],
         "logs": [*state["logs"], f"[DIRECT] '{dish['dishKey']}' resolved by exact FAO match"],
+        "action": "advance_index",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Node 2: verified snack check (packaged items only)
+# ---------------------------------------------------------------------------
+def check_verified_snack(state: PlateState) -> dict[str, Any]:
+    dish = _current_dish(state)
+    is_packaged = bool(dish.get("isPackaged")) or bool(dish.get("brandHint"))
+    if not is_packaged:
+        return {"action": "fuzzy_match_dish"}
+
+    result = get_verified_snack(dish["dishKey"])
+    if result is None:
+        return {"action": "fuzzy_match_dish"}
+
+    return {
+        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "verified_label", result, confidence=0.98)],
+        "logs": [*state["logs"], f"[VERIFIED] '{dish['dishKey']}' -> '{result['name']}' (manufacturer label)"],
         "action": "advance_index",
     }
 
@@ -152,7 +174,7 @@ def fuzzy_match_dish(state: PlateState) -> dict[str, Any]:
     if best is None:
         return {
             "logs": [*state["logs"], f"[FUZZY MISS] '{dish['dishKey']}'"],
-            "action": "ai_reclassify_dish",
+            "action": "check_off_match",
         }
 
     matched_key = best[0]
@@ -161,11 +183,11 @@ def fuzzy_match_dish(state: PlateState) -> dict[str, Any]:
     if result is None:
         return {
             "logs": [*state["logs"], f"[FUZZY MISS] '{dish['dishKey']}'"],
-            "action": "ai_reclassify_dish",
+            "action": "check_off_match",
         }
 
-    confidence = 0.70 + (fuzzy_score - FUZZY_THRESHOLD) * 0.0088
-    confidence = max(0.70, min(0.82, confidence))
+    confidence = 0.80 + (fuzzy_score - FUZZY_THRESHOLD) * 0.008
+    confidence = max(0.80, min(0.88, confidence))
     return {
         "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "fuzzy", result, confidence=confidence)],
         "logs": [*state["logs"], f"[FUZZY] '{dish['dishKey']}' -> '{matched_key}' (score={fuzzy_score:.0f})"],
@@ -174,17 +196,17 @@ def fuzzy_match_dish(state: PlateState) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Node 3: LLM reclassification (Groq Llama 3.3 70B)
+# Node 4: LLM reclassification (Groq Llama 3.3 70B)
 # ---------------------------------------------------------------------------
 def ai_reclassify_dish(state: PlateState) -> dict[str, Any]:
     dish = _current_dish(state)
     reclassified = providers.ai_reclassify_dish(dish["dishKey"], _ai_candidate_keys(dish["dishKey"]))
     if reclassified is None:
-        return {"action": "check_off_match"}
+        return {"action": "mark_unresolved"}
 
     result = lookup_direct_fao(reclassified)
     if result is None:
-        return {"action": "check_off_match"}
+        return {"action": "mark_unresolved"}
 
     return {
         "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "ai_reclassify", result, confidence=0.65)],
@@ -194,7 +216,7 @@ def ai_reclassify_dish(state: PlateState) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Node 3.5: Open Food Facts (packaged items only)
+# Node 3: Open Food Facts (packaged items only)
 # ---------------------------------------------------------------------------
 def check_off_match(state: PlateState) -> dict[str, Any]:
     dish = _current_dish(state)
@@ -202,7 +224,7 @@ def check_off_match(state: PlateState) -> dict[str, Any]:
     if not is_packaged:
         return {
             "logs": [*state["logs"], f"[OFF SKIP] '{dish['dishKey']}' not packaged"],
-            "action": "mark_unresolved",
+            "action": "ai_reclassify_dish",
         }
 
     result = resolve_food_item(
@@ -214,7 +236,7 @@ def check_off_match(state: PlateState) -> dict[str, Any]:
     if result is None:
         return {
             "logs": [*state["logs"], f"[OFF MISS] '{dish['dishKey']}'"],
-            "action": "mark_unresolved",
+            "action": "ai_reclassify_dish",
         }
 
     entry = _resolved_entry(dish, "off", result, confidence=0.75)
@@ -244,9 +266,10 @@ def mark_unresolved(state: PlateState) -> dict[str, Any]:
 # Loop bookkeeping + routing
 # ---------------------------------------------------------------------------
 ACTION_EDGES = {
+    "check_verified_snack": "check_verified_snack",
     "fuzzy_match_dish": "fuzzy_match_dish",
-    "ai_reclassify_dish": "ai_reclassify_dish",
     "check_off_match": "check_off_match",
+    "ai_reclassify_dish": "ai_reclassify_dish",
     "mark_unresolved": "mark_unresolved",
     "advance_index": "advance_index",
     "aggregate_nutrients": "aggregate_nutrients",
@@ -297,18 +320,20 @@ def build_plate_resolution_graph():
 
     graph = StateGraph(PlateState)
     graph.add_node("check_fao_match", check_fao_match)
+    graph.add_node("check_verified_snack", check_verified_snack)
     graph.add_node("fuzzy_match_dish", fuzzy_match_dish)
-    graph.add_node("ai_reclassify_dish", ai_reclassify_dish)
     graph.add_node("check_off_match", check_off_match)
+    graph.add_node("ai_reclassify_dish", ai_reclassify_dish)
     graph.add_node("mark_unresolved", mark_unresolved)
     graph.add_node("advance_index", advance_index)
     graph.add_node("aggregate_nutrients", aggregate_nutrients)
 
     graph.set_entry_point("check_fao_match")
     graph.add_conditional_edges("check_fao_match", route_by_action, ACTION_EDGES)
+    graph.add_conditional_edges("check_verified_snack", route_by_action, ACTION_EDGES)
     graph.add_conditional_edges("fuzzy_match_dish", route_by_action, ACTION_EDGES)
-    graph.add_conditional_edges("ai_reclassify_dish", route_by_action, ACTION_EDGES)
     graph.add_conditional_edges("check_off_match", route_by_action, ACTION_EDGES)
+    graph.add_conditional_edges("ai_reclassify_dish", route_by_action, ACTION_EDGES)
     graph.add_edge("mark_unresolved", "advance_index")
     graph.add_conditional_edges(
         "advance_index",
