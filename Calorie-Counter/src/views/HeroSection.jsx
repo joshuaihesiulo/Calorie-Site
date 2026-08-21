@@ -8,19 +8,19 @@ export default function HeroSection() {
   return (
     <section className="relative min-h-[90vh] bg-white px-6 py-12 flex flex-col items-center justify-center overflow-hidden">
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-
-        {/* Left Food Image */}
+        
+        {/* Left Hand Card Visual */}
         <div className="lg:col-span-3 flex justify-center lg:justify-end animate-fadeUp" style={{ animationDelay: '80ms' }}>
-          <div className="w-72 h-80 rounded-[2.5rem] overflow-hidden shadow-xl transform -rotate-3 transition-transform duration-500 hover:rotate-0 hover:scale-[1.03]">
-            <img src={REAL_FOOD_IMAGES.heroLeft} alt="Amala plate" className="w-full h-full object-cover" />
+          <div className="w-72 h-80 rounded-[2.5rem] p-4 relative bg-white shadow-2xl shadow-[#E92A43]/10 transform -rotate-6 overflow-hidden transition-transform duration-500 hover:rotate-0 hover:scale-[1.03]">
+            <div className="p-3 w-full h-full rounded-[2rem] bg-gray-100 overflow-hidden relative border-6 border-red-800">
+              <img src={REAL_FOOD_IMAGES.heroLeft} alt="Amala plate" className="w-full h-full object-cover rounded-[1.5rem]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#E92A43]/30 to-transparent" />
+            </div>
           </div>
         </div>
 
-        {/* Center Text Block */}
+        {/* Center Text Block Layout */}
         <div className="lg:col-span-6 text-center flex flex-col items-center animate-fadeUp" style={{ animationDelay: '160ms' }}>
-          <span className="inline-block bg-[#00F090] text-[#2C3768] text-sm font-bold px-5 py-2 rounded-full mb-6">
-            AI for Nigerian meals
-          </span>
           <h1 className="text-3xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter leading-[0.95] mb-6">
             Track Smarter.<br /><span className="text-black">Eat Naija.</span><br />Live Better.
           </h1>
@@ -30,23 +30,23 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
             <button
               onClick={() => setView('scan')}
-              className="bg-[#00F090] text-[#2C3768] font-bold px-8 py-4 rounded-2xl shadow-[0_8px_20px_rgba(0,240,144,0.3)] hover:translate-y-[-2px] transition-all cursor-pointer active:scale-[0.98]"
+              className="bg-[#E92A43] text-white font-bold px-8 py-4 rounded-2xl shadow-[0_8px_20px_rgba(233,42,67,0.3)] hover:translate-y-[-2px] transition-all cursor-pointer active:scale-[0.98]"
             >
               Scan your plate
             </button>
             <button
               onClick={goToPortal}
-              className="bg-white border-2 border-[#2C3768]/20 text-[#2C3768] font-bold px-8 py-4 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer active:scale-[0.98]"
+              className="bg-[#FFF4CA] border border-[#2C3768]/20 text-[#2C3768] font-bold px-8 py-4 rounded-2xl hover:bg-opacity-80 transition-all cursor-pointer active:scale-[0.98]"
             >
               See food library
             </button>
           </div>
         </div>
 
-        {/* Right Food Image & Macro Pills */}
+        {/* Right Hand Card Visual & Pill Data layout */}
         <div className="lg:col-span-3 flex flex-col items-center lg:items-start gap-4 animate-fadeUp" style={{ animationDelay: '240ms' }}>
-          <div className="w-72 h-48 rounded-[2rem] overflow-hidden shadow-xl transform rotate-3 transition-transform duration-500 hover:rotate-0 hover:scale-[1.03]">
-            <img src={REAL_FOOD_IMAGES.heroRight} alt="Jollof rice" className="w-full h-full object-cover" />
+          <div className="p-3 w-72 h-48 rounded-[2rem] p-3 bg-white shadow-xl transform rotate-6 overflow-hidden border-6 border-orange-600">
+            <img src={REAL_FOOD_IMAGES.heroRight} alt="Jollof rice" className="w-full h-full object-cover rounded-[1.5rem]" />
           </div>
           <div className="flex gap-3 mt-2">
             <div className="w-20 h-20 rounded-full bg-[#3CE8E3]/20 flex flex-col items-center justify-center border border-[#3CE8E3]">
