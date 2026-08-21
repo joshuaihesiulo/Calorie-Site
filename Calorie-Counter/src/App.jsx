@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HeroSection from './views/HeroSection';
 import ProblemSection from './views/ProblemSection';
+import MealSwapSection from './views/MealSwapSection';
 import CounterSection from './views/CounterSection';
 import DecodedSection from './views/DecodedSection';
 import StreakSection from './views/StreakSection';
@@ -16,6 +17,7 @@ import SignUpView from './components/SignUpView';
 import SignInView from './components/SignInView';
 import ScanView from './components/ScanView';
 import ScanResultView from './components/ScanResultView';
+import MealSwapView from './components/MealSwapView';
 import DailyDashboardView from './components/DailyDashboardView';
 
 export default function App() {
@@ -44,6 +46,7 @@ export default function App() {
           </div>
           
           <ProblemSection />
+          <MealSwapSection />
           <CounterSection />
           <DecodedSection />
           <StreakSection />
@@ -57,6 +60,7 @@ export default function App() {
             {effectiveView === 'signin' && <SignInView />}
             {effectiveView === 'scan' && <ScanView />}
             {effectiveView === 'result' && <ScanResultView />}
+            {effectiveView === 'swap' && <MealSwapView />}
             {effectiveView === 'dashboard' && <DailyDashboardView />}
           </div>
         </main>

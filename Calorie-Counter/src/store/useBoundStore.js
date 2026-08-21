@@ -186,12 +186,16 @@ export const useBoundStore = create((set, get) => ({
   // Last meal committed from a scan — drives the "add another serving" shortcut
   lastCommittedMeal: null,
 
+  // Meal swap data — holds the scanned meal for the swap view
+  swapMealData: null,
+
   // User settings (persisted per-user)
   calorieGoal: DEFAULT_CALORIE_GOAL,
   templates: [],
 
   toggleWaitlist: () => set((state) => ({ waitlistOpen: !state.waitlistOpen })),
   setView: (view) => set({ currentView: view }),
+  setSwapMealData: (data) => set({ swapMealData: data }),
 
   setAuthUser: (user) => {
     const state = get();

@@ -27,6 +27,7 @@ export default function ScanResultView() {
   const setView = useBoundStore((state) => state.setView);
   const isAuthenticated = useBoundStore((state) => state.isAuthenticated);
   const setAuthRedirectView = useBoundStore((state) => state.setAuthRedirectView);
+  const setSwapMealData = useBoundStore((state) => state.setSwapMealData);
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   const handleCommit = () => {
@@ -35,6 +36,18 @@ export default function ScanResultView() {
       return;
     }
     commitScannedMeal();
+  };
+
+  const handleFindSwaps = () => {
+    setSwapMealData({
+      name,
+      calories: computed.calories,
+      proteinG: Number(totals.proteinG) || 0,
+      carbsG: Number(totals.carbsG) || 0,
+      fatG: Number(totals.fatG) || 0,
+      grams: computed.grams,
+    });
+    setView('swap');
   };
 
   const goToAuth = (view) => {
@@ -54,7 +67,7 @@ export default function ScanResultView() {
   const dishes = scannedFoodData.dishes || [];
   const totals = scannedFoodData.totals || {};
   const unresolvedDishes = scannedFoodData.unresolvedDishes || [];
-  const steps = scannedFoodData.steps || [];
+  const stepsData = scannedFoodData.steps || [];
   const selectedQuantity = Number(scannedFoodData.selectedQuantity) || 1;
 
   const name = primaryDishName(scannedFoodData);
@@ -94,6 +107,18 @@ export default function ScanResultView() {
             <div className="flex items-start justify-between mb-6">
               <div className="min-w-0">
                 <span className="text-xs font-black text-[#8A8A9E] uppercase block mb-1">Dynamically Sourced (WAFCT · Open Food Facts)</span>
+                {stepsData.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {stepsData.map((s, i) => (
+                      <span key={i} className="bg-white/5 border border-white/10 text-[#8A8A9E] text-[9px] font-bold px-2 py-0.5 rounded-full">
+                        {s.step === 'identifying' ? 'Gemini' : 'Nutrition'} · {(s.duration_ms / 1000).toFixed(1)}s
+                      </span>
+                    ))}
+                    <span className="bg-[#00F090]/10 border border-[#00F090]/20 text-[#00F090] text-[9px] font-bold px-2 py-0.5 rounded-full">
+                      Total · {((stepsData.reduce((a, s) => a + s.duration_ms, 0)) / 1000).toFixed(1)}s
+                    </span>
+                  </div>
+                )}
                 <h2 className="text-2xl font-black tracking-tight text-[#00F090] mb-2 truncate">{name}</h2>
 
                 {scaledDishes.length > 0 && (
@@ -227,6 +252,12 @@ export default function ScanResultView() {
               className="w-full bg-[#6B5E96] text-white font-black py-4 rounded-2xl hover:bg-[#6B5E96]/95 transition-all text-sm shadow-md"
             >
               Commit to Food Diary
+            </button>
+            <button
+              onClick={handleFindSwaps}
+              className="w-full bg-white/5 border border-white/10 text-[#8A8A9E] font-black py-3 rounded-2xl hover:bg-white/10 transition-all text-xs"
+            >
+              Find Healthier Swaps
             </button>
             <button
               onClick={() => setView('scan')}
