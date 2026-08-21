@@ -15,8 +15,8 @@ export default function StreakSection() {
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
         
         {/* Left Card */}
-        <Reveal delay={80}>
-        <div className="md:col-span-3 bg-[#E92A43] text-white rounded-[2rem] p-6 text-center shadow-lg transform md:-rotate-3 transition-transform duration-300 hover:-rotate-0">
+        <Reveal delay={80} className="md:col-span-3">
+        <div className="bg-[#E92A43] text-white rounded-[2rem] p-6 text-center shadow-lg transform md:-rotate-3 transition-transform duration-300 hover:-rotate-0">
           <h3 className="font-black text-lg mb-4 tracking-tight leading-none">Doubt vs. Reality</h3>
           <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white/10 mb-4">
            <img src={REAL_FOOD_IMAGES.suyaSmoke} alt="Suya smoke screen" className="w-full h-full object-cover" />
@@ -26,8 +26,8 @@ export default function StreakSection() {
         </Reveal>
 
         {/* Central Layout Device Mockup */}
-        <Reveal delay={160}>
-        <div className="md:col-span-6 flex justify-center z-10">
+        <Reveal delay={160} className="md:col-span-6">
+        <div className="flex justify-center z-10">
           <div className="w-72 bg-[#2C3768] rounded-[3rem] p-3 shadow-2xl border-4 border-[#2C3768]/30 transition-transform duration-500 hover:scale-[1.03]">
             <div className="bg-white rounded-[2.5rem] overflow-hidden aspect-[9/16] relative flex flex-col justify-between p-4">
               <div className="h-full w-full rounded-2xl overflow-hidden absolute inset-0">
@@ -48,8 +48,8 @@ export default function StreakSection() {
         </Reveal>
 
         {/* Right Stack Cards */}
-        <Reveal delay={240}>
-        <div className="md:col-span-3 flex flex-col gap-4 transform md:rotate-3">
+        <Reveal delay={240} className="md:col-span-3">
+        <div className="flex flex-col gap-4 transform md:rotate-3">
           <div className="bg-[#FFF4CA]/60 p-4 rounded-[2rem] border border-[#FFF4CA] shadow-sm transition-transform duration-300 hover:-translate-y-1">
             <h4 className="text-[#E92A43] font-black text-sm mb-2 leading-none">White rice again? Think again.</h4>
             <div className="w-full aspect-video rounded-xl bg-gray-100 overflow-hidden mb-2">

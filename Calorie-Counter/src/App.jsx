@@ -6,6 +6,7 @@ import CounterSection from './views/CounterSection';
 import DecodedSection from './views/DecodedSection';
 import StreakSection from './views/StreakSection';
 import HowItWorks from './views/HowItWorks';
+import Footer from './components/Footer';
 import { useBoundStore } from './store/useBoundStore';
 import { watchAuthState } from './firebase/auth';
 import { XIcon } from './components/icons';
@@ -47,6 +48,7 @@ export default function App() {
           <DecodedSection />
           <StreakSection />
           <HowItWorks />
+          <Footer />
         </main>
       ) : (
         <main key={effectiveView} className="bg-[#F9F8F4] py-8 sm:py-12 px-4 min-h-[90vh] flex items-center justify-center transition-all duration-300 max-md:p-0 max-md:items-stretch">

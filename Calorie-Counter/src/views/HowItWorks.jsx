@@ -27,8 +27,8 @@ export default function HowItWorks() {
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
         
         {/* Left Elements Stack */}
-        <Reveal delay={80}>
-        <div className="lg:col-span-4 flex flex-col gap-6 items-center lg:items-end order-2 lg:order-1">
+        <Reveal delay={80} className="lg:col-span-4">
+        <div className="flex flex-col gap-6 items-center lg:items-end order-2 lg:order-1">
           <div className={`${steps[0].bg} font-black text-xs px-5 py-3 rounded-full shadow-lg flex items-center gap-2 transform hover:scale-105 hover:-translate-y-0.5 transition-all duration-300`}>
             <span>{steps[0].num} —</span> <span>{steps[0].label}</span>
           </div>
@@ -39,8 +39,8 @@ export default function HowItWorks() {
         </Reveal>
 
         {/* Central Display Image Box */}
-        <Reveal delay={160}>
-        <div className="lg:col-span-4 flex justify-center order-1 lg:order-2">
+        <Reveal delay={160} className="lg:col-span-4">
+        <div className="flex justify-center order-1 lg:order-2">
           <div className="w-72 aspect-[4/5] rounded-[3rem] overflow-hidden shadow-2xl bg-white border border-gray-100 p-4 transition-transform duration-500 hover:scale-[1.03]">
             <div className="w-full h-full rounded-[2.2rem] bg-gray-50 overflow-hidden">
              <img src={REAL_FOOD_IMAGES.scanHand} alt="Scanning dish process" className="w-full h-full object-cover" />
@@ -50,8 +50,8 @@ export default function HowItWorks() {
         </Reveal>
 
         {/* Right Elements Stack */}
-        <Reveal delay={240}>
-        <div className="lg:col-span-4 flex flex-col gap-6 items-center lg:items-start order-3">
+        <Reveal delay={240} className="lg:col-span-4">
+        <div className="flex flex-col gap-6 items-center lg:items-start order-3">
           <div className={`${steps[1].bg} font-black text-xs px-5 py-3 rounded-full shadow-lg flex items-center gap-2 transform hover:scale-105 hover:-translate-y-0.5 transition-all duration-300`}>
             <span>{steps[1].num} —</span> <span>{steps[1].label}</span>
           </div>
