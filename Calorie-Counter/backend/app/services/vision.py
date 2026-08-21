@@ -92,26 +92,63 @@ KNOWN_KEYS = (
 
 MAX_ATTEMPTS = 3  # initial call + 2 retries
 
-IDENTIFY_PROMPT = """Look at this plate of West African/Nigerian food carefully.
-List EVERY visually distinct item on the plate or in the photo, with estimated weight in grams.
+IDENTIFY_PROMPT = """You are analyzing a photo of a Nigerian/West African meal.
 
+## TASK
+Identify every distinct food item on the plate and estimate its weight in grams.
+
+## HOW TO ESTIMATE WEIGHT ACCURATELY
+Use these visual cues from the image:
+1. REFERENCE OBJECTS - compare food size to any visible fork, spoon, hand, phone, cup, or plate edge
+2. CONTAINER SIZE - standard dinner plate = ~26cm diameter; small bowl = ~15cm; calabash = ~20cm; newspaper wrap = ~15cm wide
+3. FOOD HEIGHT - how high does the food pile above the rim? Flat layer = thin portion; dome shape = generous portion
+4. FOOD DENSITY - dense foods (pounded yam, rice, amala, eba) weigh more per scoop than light foods (suya strips, salad, fried plantain)
+
+## TYPICAL PORTION RANGES (grams)
+Use these as guardrails. Only go outside the range if visual evidence strongly supports it:
+- Jollof Rice / Fried Rice: 200-400g (heaping plate = 350+, modest flat serving = 200)
+- Pounded Yam / Amala / Eba: 150-300g (fist-sized ball = ~200g; two balls = ~300g)
+- Egusi / Oha / Efo soup: 150-250g (deep bowl full = 250, shallow plate = 150)
+- Suya: 100-200g (6-8 sticks on a plate = ~150g)
+- Moin Moin / Akara: 80-150g (single wrap = ~120g; 3-4 akara balls = ~100g)
+- Fried Plantain (dodo): 80-150g (4-5 slices = ~120g)
+- Whole chicken piece: 150-250g
+- Whole fish: 200-350g
+- Pepper soup (liquid): 300-450g per bowl
+- Indomie noodles (full pack cooked): 300-350g
+- Packaged snacks: use the labeled weight printed on the package if visible
+
+## MATCHING KEYS
 You MUST try to match each item to one of these exact known keys if plausible:
 {known_keys}
 
 Only invent a new lowercase_underscore key if the item clearly does NOT match any above.
 
-For PACKAGED products (chips, biscuits, drinks, noodles, candy, bottled beverages...):
+## PACKAGED PRODUCTS
+For PACKAGED products (chips, biscuits, drinks, noodles, candy, bottled beverages):
 - set isPackaged to true
 - brandHint: the product or brand name printed on the package as the user would read it,
   e.g. "Gala Chicken Roll", "Indomie Chicken", "Maltina", "Coca-Cola 50cl"
 For cooked/street food, isPackaged must be false and brandHint null.
 
-Return ONLY raw JSON, no markdown, no backticks:
+## OUTPUT FORMAT
+Return ONLY raw JSON, no markdown, no backticks, no explanation outside the JSON:
 {{
   "dishes": [
-    {{ "dishKey": "amala", "displayName": "Amala", "estimatedGrams": 200, "isPackaged": false, "brandHint": null }}
+    {{
+      "dishKey": "jollof_rice",
+      "displayName": "Jollof Rice",
+      "estimatedGrams": 320,
+      "confidence": 0.85,
+      "isPackaged": false,
+      "brandHint": null,
+      "reasoning": "Heaping portion on standard dinner plate, rice piles above rim"
+    }}
   ]
-}}"""
+}}
+
+The confidence field (0.0 to 1.0) reflects how certain you are about the weight estimate.
+The reasoning field is a brief note on how you estimated the weight."""
 
 
 def _fold(text: str) -> str:
