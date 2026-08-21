@@ -2,6 +2,7 @@
  *
  * Finds calorie-matched alternatives from the food catalog,
  * sorted by macro preference (protein, carbs, balanced).
+ * Filters by category: snacks swap with snacks, foods swap with foods.
  * Entirely frontend — no backend calls.
  */
 
@@ -33,6 +34,55 @@ const DISH_NAMES = {
   potato_chips: 'Potato Chips',
   plantain_chips: 'Plantain Chips',
 };
+
+const FOOD_EMOJI = {
+  jollof_rice: '🍚', fried_rice: '🍚', egusi_soup: '🍲', oha_soup: '🍲',
+  efo_riro: '🍲', pounded_yam: '🫓', amala: '🫓', eba: '🫓',
+  fried_plantain: '🍌', boli: '🍌', moin_moin: '🫘', akara: '🫘',
+  suya: '🥩', goat_meat_pepper_soup: '🥘', masa: '🥞',
+  chin_chin: '🍪', puff_puff: '🍩', meat_pie: '🥧',
+  egg_roll: '🥚', scotch_egg: '🥚', potato_chips: '🍟',
+  plantain_chips: '🍌',
+};
+
+const SNACK_EMOJI = {
+  gala_chicken_roll: '🌯', indomie_chicken_noodles: '🍜',
+  peak_instant_milk_powder: '🥛', maltina_malt_drink: '🍺',
+  beloxxi_cream_crackers: '🍪', beloxxi_cream_crackers_26g: '🍪',
+  beloxxi_cream_crackers_52g: '🍪', parle_7to7: '🍪',
+  parle_all_butter_cake: '🍰', mcvities_digestive_fibre: '🍪',
+  parle_fab: '🍪', yatee_grab_and_go: '🌯', parle_milk_power: '🥛',
+  yale_spicy_fish_biscuit: '🍪', parle_top_biscuit: '🍪',
+  amstel_malta_ultra: '🍺', cadbury_bournvita: '☕',
+  milo_tin_powder: '☕', minimie_chin_chin: '🍪',
+  pure_bliss_milk_cookies: '🍪', pure_bliss_milk_cream_wafer: '🧇',
+  superbite_sausage_roll: '🌯', yale_cabin_biscuits: '🍪',
+  oxford_coaster_biscuits: '🍪', hollandia_yoghurt: '🥛',
+  chivita_orange_juice: '🧃', lacasera_apple_drink: '🧃',
+  viju_milk_drink: '🥛', festo_espresso: '☕',
+  milk_bread_milk_coffee: '☕', seven_up_500ml: '🥤',
+  american_cola_600ml: '🥤', beta_malt_330ml: '🍺',
+  bigi_cola_50cl: '🥤', bigi_spirite_500ml: '🥤',
+  bigi_apple_500ml: '🥤', coca_cola_50cl: '🥤',
+  fanta_500ml: '🥤', nutri_milk_500ml: '🥛',
+  nutri_yo_500ml: '🥛', pepsi_500ml: '🥤',
+  razzl_orange_330ml: '🥤', smoov_chapman_500ml: '🍹',
+  five_alive_pineapple_330ml: '🧃',
+};
+
+const FOOD_GRADIENTS = [
+  'from-[#E92A43]/20 to-[#FF7A30]/20',
+  'from-[#00F090]/20 to-[#3CE8E3]/20',
+  'from-[#FF7A30]/20 to-[#FFF4CA]/20',
+  'from-[#3CE8E3]/20 to-[#6B5E96]/20',
+];
+
+const SNACK_GRADIENTS = [
+  'from-[#6B5E96]/20 to-[#3CE8E3]/20',
+  'from-[#FF7A30]/20 to-[#E92A43]/20',
+  'from-[#00F090]/20 to-[#FFF4CA]/20',
+  'from-[#3CE8E3]/20 to-[#6B5E96]/20',
+];
 
 const NUTRIENTS = ['calories', 'protein', 'carbs', 'fat', 'fiber'];
 
@@ -180,13 +230,14 @@ function balancedScore(item, orig) {
  * Find calorie-matched meal alternatives sorted by macro preference.
  *
  * @param {number} originalCalories - Total kcal of the scanned meal
- * @param {object} originalMacros - { protein, carbs, fat } in grams per serving
+ * @param {object} originalMacros - { protein, carbs, fat, name } in grams per serving
  * @param {string} preference - 'protein' | 'carbs' | 'balanced'
  * @param {number} servingGrams - Serving size in grams (default 300)
  * @param {number} limit - Max results (default 3)
- * @returns {Array} Swap candidates with tags and deltas
+ * @param {string} sourceType - 'dish' | 'snack' | null (null = same as original)
+ * @returns {Array} Swap candidates with tags, deltas, emoji, and gradients
  */
-export function findSwaps(originalCalories, originalMacros, preference = 'balanced', servingGrams = DEFAULT_SERVING_GRAMS, limit = 3) {
+export function findSwaps(originalCalories, originalMacros, preference = 'balanced', servingGrams = DEFAULT_SERVING_GRAMS, limit = 3, sourceType = null) {
   if (!originalCalories || originalCalories <= 0) return [];
 
   const targetPer100 = originalCalories / (servingGrams / 100);
@@ -200,12 +251,15 @@ export function findSwaps(originalCalories, originalMacros, preference = 'balanc
     fiber_per_100g: 0,
   };
 
+  const matchSource = sourceType || originalMacros.source || null;
+
   let candidates = CATALOG.filter((item) => {
     const cal100 = Number(item.calories_per_100g) || 0;
     if (cal100 < low || cal100 > high) return false;
     const itemName = normalize(item.name);
     const origName = normalize(originalMacros.name || '');
     if (itemName === origName) return false;
+    if (matchSource && item.source !== matchSource) return false;
     return true;
   });
 
@@ -217,19 +271,28 @@ export function findSwaps(originalCalories, originalMacros, preference = 'balanc
     candidates.sort((a, b) => balancedScore(b, origPer100) - balancedScore(a, origPer100));
   }
 
-  return candidates.slice(0, limit).map((item) => ({
-    name: item.name,
-    key: item.key || item.name,
-    source: item.source,
-    calories_per_100g: Number(item.calories_per_100g) || 0,
-    protein_per_100g: Number(item.protein_per_100g) || 0,
-    carbs_per_100g: Number(item.carbs_per_100g) || 0,
-    fat_per_100g: Number(item.fat_per_100g) || 0,
-    estimatedCalories: estimatedCalories(item),
-    estimatedProtein: estimatedMacro(item, 'protein'),
-    estimatedCarbs: estimatedMacro(item, 'carbs'),
-    estimatedFat: estimatedMacro(item, 'fat'),
-    tags: computeTags(item, origPer100),
-    macroDelta: computeMacroDelta(item, origPer100),
-  }));
+  const gradients = matchSource === 'snack' ? SNACK_GRADIENTS : FOOD_GRADIENTS;
+  const emojiMap = matchSource === 'snack' ? SNACK_EMOJI : FOOD_EMOJI;
+
+  return candidates.slice(0, limit).map((item, i) => {
+    const key = item.key || item.name;
+    const emoji = emojiMap[key] || emojiMap[normalize(item.name)] || (matchSource === 'snack' ? '🍪' : '🍽️');
+    return {
+      name: item.name,
+      key,
+      source: item.source,
+      emoji,
+      gradient: gradients[i % gradients.length],
+      calories_per_100g: Number(item.calories_per_100g) || 0,
+      protein_per_100g: Number(item.protein_per_100g) || 0,
+      carbs_per_100g: Number(item.carbs_per_100g) || 0,
+      fat_per_100g: Number(item.fat_per_100g) || 0,
+      estimatedCalories: estimatedCalories(item),
+      estimatedProtein: estimatedMacro(item, 'protein'),
+      estimatedCarbs: estimatedMacro(item, 'carbs'),
+      estimatedFat: estimatedMacro(item, 'fat'),
+      tags: computeTags(item, origPer100),
+      macroDelta: computeMacroDelta(item, origPer100),
+    };
+  });
 }

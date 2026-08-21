@@ -39,6 +39,11 @@ function SwapCard({ swap, onSwap }) {
         ))}
       </div>
 
+      {/* Food Emoji */}
+      <div className={`w-full aspect-[3/2] rounded-2xl mb-3 flex items-center justify-center bg-gradient-to-br ${swap.gradient || 'from-[#6B5E96]/20 to-[#3CE8E3]/20'}`}>
+        <span className="text-6xl">{swap.emoji || '🍽️'}</span>
+      </div>
+
       {/* Dish Name */}
       <h4 className="text-sm font-black text-white tracking-tight mb-0.5 truncate">{swap.name}</h4>
       <p className="text-[#8A8A9E] text-xs font-bold mb-3">{swap.estimatedCalories} kcal</p>
@@ -105,18 +110,18 @@ export default function MealSwapView() {
   const servingGrams = original.grams || 300;
 
   const proteinSwaps = useMemo(
-    () => findSwaps(original.calories, swapInput, 'protein', servingGrams, 1),
-    [original.calories, swapInput, servingGrams]
+    () => findSwaps(original.calories, swapInput, 'protein', servingGrams, 1, original.sourceType),
+    [original.calories, swapInput, servingGrams, original.sourceType]
   );
 
   const carbSwaps = useMemo(
-    () => findSwaps(original.calories, swapInput, 'carbs', servingGrams, 1),
-    [original.calories, swapInput, servingGrams]
+    () => findSwaps(original.calories, swapInput, 'carbs', servingGrams, 1, original.sourceType),
+    [original.calories, swapInput, servingGrams, original.sourceType]
   );
 
   const balancedSwaps = useMemo(
-    () => findSwaps(original.calories, swapInput, 'balanced', servingGrams, 1),
-    [original.calories, swapInput, servingGrams]
+    () => findSwaps(original.calories, swapInput, 'balanced', servingGrams, 1, original.sourceType),
+    [original.calories, swapInput, servingGrams, original.sourceType]
   );
 
   const allSwaps = useMemo(() => {
@@ -164,6 +169,9 @@ export default function MealSwapView() {
             <span className="inline-block bg-[#E92A43]/15 text-[#E92A43] text-[10px] font-bold px-3 py-1.5 rounded-full mb-4 border border-[#E92A43]/30">
               Original Meal
             </span>
+            <div className="w-full aspect-[3/2] rounded-2xl mb-4 flex items-center justify-center bg-gradient-to-br from-[#6B5E96]/15 to-[#E92A43]/15">
+              <span className="text-6xl">{original.sourceType === 'snack' ? '🍪' : '🍽️'}</span>
+            </div>
             <h2 className="text-xl font-black tracking-tight text-white mb-1">{original.name}</h2>
             <p className="text-[#8A8A9E] text-sm font-bold mb-5">{original.calories} kcal</p>
 
