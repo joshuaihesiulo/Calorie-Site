@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { REAL_FOOD_IMAGES } from '../constants/images';
 import { findSwaps } from '../utils/mealSwap';
 import Reveal from '../components/Reveal';
 
@@ -18,6 +19,13 @@ const FEATURED = {
   carbs: 58,
   fat: 18,
   grams: 300,
+  image: REAL_FOOD_IMAGES.heroLeft,
+};
+
+const SWAP_IMAGES = {
+  protein: REAL_FOOD_IMAGES.heroRight,
+  carbs: REAL_FOOD_IMAGES.soupDetail,
+  balanced: REAL_FOOD_IMAGES.riceBowl,
 };
 
 const TAG_STYLES = {
@@ -34,12 +42,12 @@ const LABELS = {
 
 export default function MealSwapSection() {
   const swaps = useMemo(() => {
-    const orig = { protein: FEATURED.protein, carbs: FEATURED.carbs, fat: FEATURED.fat, name: FEATURED.name, source: 'dish' };
+    const orig = { protein: FEATURED.protein, carbs: FEATURED.carbs, fat: FEATURED.fat, name: FEATURED.name };
     const proteinResult = findSwaps(FEATURED.calories, orig, 'protein', FEATURED.grams, 1);
     const carbResult = findSwaps(FEATURED.calories, orig, 'carbs', FEATURED.grams, 1);
     return [
       { ...proteinResult[0], preference: 'protein' },
-      { ...FEATURED, preference: 'original', emoji: '🍚', gradient: 'from-[#E92A43]/20 to-[#FF7A30]/20', tags: [{ label: 'Scanned meal', color: '#3CE8E3', bg: 'bg-[#3CE8E3]/20', text: 'text-[#2C3768]', border: 'border-[#3CE8E3]' }] },
+      { ...FEATURED, preference: 'original', tags: [{ label: 'Scanned meal', color: '#3CE8E3', bg: 'bg-[#3CE8E3]/20', text: 'text-[#2C3768]', border: 'border-[#3CE8E3]' }] },
       { ...carbResult[0], preference: 'carbs' },
     ].filter(Boolean);
   }, []);
@@ -66,8 +74,8 @@ export default function MealSwapSection() {
               <span className="inline-block bg-[#E92A43]/10 text-[#E92A43] text-xs font-bold px-3 py-1.5 rounded-full mb-4">
                 Scanned Meal
               </span>
-              <div className="w-full aspect-[4/3] rounded-[1.5rem] mb-5 flex items-center justify-center bg-gradient-to-br from-[#E92A43]/15 to-[#FF7A30]/15">
-                <span className="text-6xl">🍚</span>
+              <div className="rounded-[1.5rem] overflow-hidden aspect-[4/3] mb-5">
+                <img src={FEATURED.image} alt="Scanned Jollof Rice" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-black text-[#2C3768] tracking-tight mb-1">{FEATURED.name}</h3>
               <p className="text-gray-400 text-sm font-medium mb-5">{FEATURED.calories} kcal</p>
@@ -102,6 +110,7 @@ export default function MealSwapSection() {
             {swaps.map((swap, i) => {
               const isOriginal = swap.preference === 'original';
               const pref = swap.preference;
+              const imageKey = isOriginal ? 'original' : pref;
               return (
                 <Reveal key={`${pref}-${i}`} delay={160 + i * 80}>
                   <div className={`bg-white rounded-[2rem] p-5 border-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
@@ -110,8 +119,8 @@ export default function MealSwapSection() {
                     <span className={`inline-block text-xs font-bold px-3 py-1.5 rounded-full mb-4 ${TAG_STYLES[pref] || TAG_STYLES.balanced}`}>
                       {isOriginal ? 'Scanned meal' : (swap.tags?.[0]?.label || LABELS[pref])}
                     </span>
-                    <div className={`w-full aspect-[4/3] rounded-[1.25rem] mb-4 flex items-center justify-center bg-gradient-to-br ${swap.gradient || 'from-[#6B5E96]/10 to-[#3CE8E3]/10'}`}>
-                      <span className="text-6xl">{swap.emoji || '🍽️'}</span>
+                    <div className="rounded-[1.25rem] overflow-hidden aspect-[4/3] mb-4">
+                      <img src={SWAP_IMAGES[imageKey] || SWAP_IMAGES.balanced} alt={swap.name} className="w-full h-full object-cover" />
                     </div>
                     <h4 className="text-base font-black text-[#2C3768] tracking-tight mb-1">{swap.name}</h4>
                     <p className="text-gray-400 text-xs font-bold mb-4">{swap.estimatedCalories || swap.calories} kcal</p>

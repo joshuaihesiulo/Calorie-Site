@@ -39,8 +39,6 @@ export default function ScanResultView() {
   };
 
   const handleFindSwaps = () => {
-    const dishSource = scannedFoodData?.dishes?.[0]?.source || scannedFoodData?.dishes?.[0]?.dishKey || 'dish';
-    const sourceType = dishSource === 'snack' ? 'snack' : 'dish';
     setSwapMealData({
       name,
       calories: computed.calories,
@@ -48,7 +46,6 @@ export default function ScanResultView() {
       carbsG: Number(totals.carbsG) || 0,
       fatG: Number(totals.fatG) || 0,
       grams: computed.grams,
-      sourceType,
     });
     setView('swap');
   };
