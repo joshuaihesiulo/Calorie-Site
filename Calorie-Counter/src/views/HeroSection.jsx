@@ -21,8 +21,8 @@ export default function HeroSection() {
 
         {/* Center Text Block Layout */}
         <div className="lg:col-span-6 text-center flex flex-col items-center animate-fadeUp" style={{ animationDelay: '160ms' }}>
-          <h1 className="text-3xl md:text-5xl font-black font-display text-[#2C3768] tracking-tighter leading-[0.95] mb-6">
-            Track Smarter.<br /><span className="text-black">Eat Naija.</span><br />Live Better.
+          <h1 className="text-3xl md:text-5xl font-black font-display text-black tracking-tighter leading-[0.95] mb-6">
+            Track Smarter.<br />Eat Naija.<br />Live Better.
           </h1>
           <p className="text-gray-600 text-base md:text-lg max-w-md mb-8 font-normal leading-relaxed">
             Snap amala, jollof, suya, egusi, moi moi, or plantain and get instant calories, macros, and portion guidance built for African plates.
