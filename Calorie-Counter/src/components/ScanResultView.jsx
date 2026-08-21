@@ -94,18 +94,6 @@ export default function ScanResultView() {
             <div className="flex items-start justify-between mb-6">
               <div className="min-w-0">
                 <span className="text-xs font-black text-[#8A8A9E] uppercase block mb-1">Dynamically Sourced (WAFCT · Open Food Facts)</span>
-                {steps.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {steps.map((s, i) => (
-                      <span key={i} className="bg-white/5 border border-white/10 text-[#8A8A9E] text-[9px] font-bold px-2 py-0.5 rounded-full">
-                        {s.step === 'identifying' ? 'Gemini' : 'Nutrition'} · {(s.duration_ms / 1000).toFixed(1)}s
-                      </span>
-                    ))}
-                    <span className="bg-[#00F090]/10 border border-[#00F090]/20 text-[#00F090] text-[9px] font-bold px-2 py-0.5 rounded-full">
-                      Total · {((steps.reduce((a, s) => a + s.duration_ms, 0)) / 1000).toFixed(1)}s
-                    </span>
-                  </div>
-                )}
                 <h2 className="text-2xl font-black tracking-tight text-[#00F090] mb-2 truncate">{name}</h2>
 
                 {scaledDishes.length > 0 && (
