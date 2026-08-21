@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HeroSection from './views/HeroSection';
 import ProblemSection from './views/ProblemSection';
+import MealSwapSection from './views/MealSwapSection';
 import CounterSection from './views/CounterSection';
 import DecodedSection from './views/DecodedSection';
 import StreakSection from './views/StreakSection';
@@ -44,6 +45,7 @@ export default function App() {
           </div>
           
           <ProblemSection />
+          <MealSwapSection />
           <CounterSection />
           <DecodedSection />
           <StreakSection />
