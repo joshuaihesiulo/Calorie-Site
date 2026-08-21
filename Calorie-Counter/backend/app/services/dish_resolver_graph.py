@@ -155,9 +155,13 @@ def check_verified_snack(state: PlateState) -> dict[str, Any]:
     if result is None:
         return {"action": "fuzzy_match_dish"}
 
+    entry = _resolved_entry(dish, "verified_label", result, confidence=0.98)
+    if result.get("serving_grams"):
+        entry["estimatedGrams"] = float(result["serving_grams"])
+
     return {
-        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "verified_label", result, confidence=0.98)],
-        "logs": [*state["logs"], f"[VERIFIED] '{dish['dishKey']}' -> '{result['name']}' (manufacturer label)"],
+        "resolved_dishes": [*state["resolved_dishes"], entry],
+        "logs": [*state["logs"], f"[VERIFIED] '{dish['dishKey']}' -> '{result['name']}' (manufacturer label, {result.get('serving_grams', '?')}g serving)"],
         "action": "advance_index",
     }
 

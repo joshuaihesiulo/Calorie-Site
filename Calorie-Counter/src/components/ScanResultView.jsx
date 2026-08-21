@@ -6,6 +6,8 @@ const RESOLUTION_LABELS = {
   direct: 'Direct',
   fuzzy: 'Fuzzy',
   ai_reclassify: 'AI',
+  verified_label: 'Verified',
+  off: 'OFF',
 };
 
 function confidenceBadge(confidence) {
@@ -127,6 +129,21 @@ export default function ScanResultView() {
                       <span key={i} className="bg-white/5 border border-white/10 text-[#8A8A9E] text-[10px] font-bold px-2.5 py-1 rounded-full">
                         {d.displayName || d.dishKey} · {Math.round(d.grams)}g
                       </span>
+                    ))}
+                    {scaledDishes.map((d, i) => (
+                      d.confidence > 0 && (
+                        <span key={`conf-${i}`} className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                          {(() => {
+                            const badge = confidenceBadge(d.confidence);
+                            return (
+                              <span className={`inline-flex items-center gap-1 ${badge.color}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${badge.bg.replace('/10', '')}`} />
+                                {badge.label} confidence
+                              </span>
+                            );
+                          })()}
+                        </span>
+                      )
                     ))}
                   </div>
                 )}

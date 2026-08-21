@@ -50,7 +50,7 @@ class TestFuzzyPath:
     def test_threshold_contract(self) -> None:
         # The spec's example pair must clear the threshold.
         score = fuzz.token_sort_ratio("egusi_sp", "egusi_soup")
-        assert FUZZY_THRESHOLD == 75
+        assert FUZZY_THRESHOLD == 85
         assert score >= FUZZY_THRESHOLD
 
     def test_near_miss_resolves_to_egusi_soup(self) -> None:
