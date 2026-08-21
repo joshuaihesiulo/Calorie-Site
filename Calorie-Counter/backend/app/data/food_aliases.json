@@ -85,7 +85,19 @@
   "gala_chicken_roll": [
     "gala",
     "gala classic",
+    "gala sausage roll",
     "sausage roll"
+  ],
+  "gala_mega_sausage_roll": [
+    "gala mega",
+    "gala king size",
+    "mega sausage roll"
+  ],
+  "gala_mini_sausage_roll": [
+    "gala mini",
+    "gala cocktail",
+    "mini sausage roll",
+    "cocktail roll"
   ],
   "indomie_chicken_noodles": [
     "indomie",
@@ -105,6 +117,10 @@
     "beloxxi",
     "beloxxi biscuit",
     "cream crackers"
+  ],
+  "beloxxi_mini_crackers": [
+    "beloxxi mini",
+    "mini crackers"
   ],
   "amstel_malta_ultra": [
     "amstel",
