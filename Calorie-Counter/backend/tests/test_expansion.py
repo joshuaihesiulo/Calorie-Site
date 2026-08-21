@@ -195,11 +195,11 @@ class TestOpenFoodFacts:
         open_food_facts._cache().clear()
 
     def test_query_hit_returns_profile(self, monkeypatch) -> None:
-        def fake_get(url, params=None, timeout=None):
+        def fake_get(url, params=None, timeout=None, headers=None):
             return {"products": [_off_product("Gala Roll", 450, "98")]}
 
-        monkeypatch.setattr(open_food_facts, "_get", fake_get)
-        profile = open_food_facts.fetch_snack_by_query("Gala Chicken Roll")
+        monkeypatch.setattr(open_food_facts, "_get_sync", fake_get)
+        profile = open_food_facts.fetch_snack_by_query_sync("Gala Chicken Roll")
         assert profile is not None
         assert profile["source"] == "open_food_facts"
         assert profile["calories_per_100g"] == 450
@@ -207,29 +207,29 @@ class TestOpenFoodFacts:
         assert profile["brand"] == "Wonder Foods"
 
     def test_no_calories_on_products_returns_none(self, monkeypatch) -> None:
-        def fake_get(url, params=None, timeout=None):
+        def fake_get(url, params=None, timeout=None, headers=None):
             return {"products": [_off_product("Gala Roll", None)]}
 
-        monkeypatch.setattr(open_food_facts, "_get", fake_get)
-        assert open_food_facts.fetch_snack_by_query("Gala") is None
+        monkeypatch.setattr(open_food_facts, "_get_sync", fake_get)
+        assert open_food_facts.fetch_snack_by_query_sync("Gala") is None
 
     def test_empty_and_failed_searches_return_none(self, monkeypatch) -> None:
-        def fake_get(url, params=None, timeout=None):
+        def fake_get(url, params=None, timeout=None, headers=None):
             return {"products": []}
 
-        monkeypatch.setattr(open_food_facts, "_get", fake_get)
-        assert open_food_facts.fetch_snack_by_query("zzz_unknown_zzz") is None
+        monkeypatch.setattr(open_food_facts, "_get_sync", fake_get)
+        assert open_food_facts.fetch_snack_by_query_sync("zzz_unknown_zzz") is None
 
     def test_cached_query_skips_network(self, monkeypatch) -> None:
         calls = []
 
-        def fake_get(url, params=None, timeout=None):
+        def fake_get(url, params=None, timeout=None, headers=None):
             calls.append(url)
             return {"products": [_off_product("Maltina", 55, "340")]}
 
-        monkeypatch.setattr(open_food_facts, "_get", fake_get)
-        open_food_facts.fetch_snack_by_query("Maltina Malt Drink")
-        open_food_facts.fetch_snack_by_query("Maltina Malt Drink")
+        monkeypatch.setattr(open_food_facts, "_get_sync", fake_get)
+        open_food_facts.fetch_snack_by_query_sync("Maltina Malt Drink")
+        open_food_facts.fetch_snack_by_query_sync("Maltina Malt Drink")
         assert len(calls) == 1
 
 
@@ -240,10 +240,10 @@ class TestOffFallbackPath:
     def test_packaged_unresolved_dish_uses_off(self, monkeypatch) -> None:
         monkeypatch.setattr(providers, "ai_reclassify_dish", lambda key, keys: None)
 
-        def fake_get(url, params=None, timeout=None):
+        def fake_get(url, params=None, timeout=None, headers=None):
             return {"products": [_off_product("Mystery Crisps", 520, "40")]}
 
-        monkeypatch.setattr(open_food_facts, "_get", fake_get)
+        monkeypatch.setattr(open_food_facts, "_get_sync", fake_get)
 
         result = run_dish_resolution_graph(
             [
@@ -270,11 +270,11 @@ class TestOffFallbackPath:
         monkeypatch.setattr(providers, "ai_reclassify_dish", lambda key, keys: None)
         calls = []
 
-        def fake_get(url, params=None, timeout=None):
+        def fake_get(url, params=None, timeout=None, headers=None):
             calls.append(url)
             return {"products": [_off_product("Whatever", 100)]}
 
-        monkeypatch.setattr(open_food_facts, "_get", fake_get)
+        monkeypatch.setattr(open_food_facts, "_get_sync", fake_get)
 
         result = run_dish_resolution_graph(
             [

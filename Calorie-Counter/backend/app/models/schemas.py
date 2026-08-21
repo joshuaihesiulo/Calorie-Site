@@ -33,6 +33,7 @@ class DetectedDish(BaseModel):
     display_name: str
     estimated_grams: float
     resolution_method: str
+    confidence: float = 0.0
     fao_result: Optional[dict] = None
 
 

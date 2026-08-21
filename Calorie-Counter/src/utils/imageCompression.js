@@ -1,4 +1,4 @@
-export const MAX_SIDE = 768;
+export const MAX_SIDE = 640;
 export const JPEG_QUALITY = 0.7;
 
 function loadImageElement(blob) {

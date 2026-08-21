@@ -47,4 +47,4 @@ def resolve_food_item(
     if not query.strip():
         return None
 
-    return open_food_facts.fetch_snack_by_query(query.strip())
+    return open_food_facts.fetch_snack_by_query_sync(query.strip())

@@ -10,6 +10,7 @@ export default function ScanView() {
   const capturedImageSrc = useBoundStore((state) => state.capturedImageSrc);
   const scanLoading = useBoundStore((state) => state.scanLoading);
   const scanError = useBoundStore((state) => state.scanError);
+  const scanStep = useBoundStore((state) => state.scanStep);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -21,7 +22,7 @@ export default function ScanView() {
 
   const checkBackend = () => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 20000);
+    const timer = setTimeout(() => controller.abort(), 5000);
     fetch('/api/health', { signal: controller.signal })
       .then((res) => setBackendOnline(res.ok))
       .catch(() => setBackendOnline(false))
@@ -115,7 +116,7 @@ export default function ScanView() {
           {scanLoading ? (
             <div className="w-full max-w-lg aspect-[4/3] rounded-[2.5rem] bg-[#12121A] flex flex-col items-center justify-center text-center p-8 border border-white/5">
               <div className="w-16 h-16 rounded-full border-4 border-[#6B5E96] border-t-transparent animate-spin mb-4" />
-              <p className="text-white font-black text-lg tracking-tight">Sourcing Real Plate from WAFCT...</p>
+              <p className="text-white font-black text-lg tracking-tight">{scanStep || 'Preparing...'}</p>
               <p className="text-[#8A8A9E] text-xs mt-1">Gemini identifying dish &amp; mapping FAO nutrient data dynamically.</p>
             </div>
           ) : (

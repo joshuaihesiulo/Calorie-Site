@@ -17,6 +17,7 @@ without network I/O for everything else.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, TypedDict
 
@@ -36,8 +37,15 @@ FUZZY_THRESHOLD = 75
 # Free-tier TPM limits (413) and degrades accuracy.
 MAX_AI_CANDIDATES = 20
 
-# Canonical keys offered to the fuzzy matcher.
-_KNOWN_KEYS = get_all_known_keys()
+# Canonical keys offered to the fuzzy matcher — built lazily on first use.
+_known_keys: list[str] | None = None
+
+
+def _get_known_keys() -> list[str]:
+    global _known_keys
+    if _known_keys is None:
+        _known_keys = get_all_known_keys()
+    return _known_keys
 
 # Totals key -> per-100g field name on the fao_result dict returned by
 # lookup_direct_fao. Iron/calcium/vitamin A only resolve when the source
@@ -102,12 +110,13 @@ def _ai_candidate_keys(dish_key: str, max_fao: int = MAX_AI_CANDIDATES) -> list[
     return keys
 
 
-def _resolved_entry(dish: dict, method: str, fao_result: dict) -> dict:
+def _resolved_entry(dish: dict, method: str, fao_result: dict, confidence: float = 0.0) -> dict:
     return {
         "dishKey": dish["dishKey"],
         "displayName": dish.get("displayName", dish["dishKey"]),
         "estimatedGrams": dish.get("estimatedGrams", 0),
         "resolution_method": method,
+        "confidence": round(confidence, 2),
         "fao_result": fao_result,
     }
 
@@ -125,7 +134,7 @@ def check_fao_match(state: PlateState) -> dict[str, Any]:
         return {"action": "fuzzy_match_dish"}
 
     return {
-        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "direct", result)],
+        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "direct", result, confidence=0.95)],
         "logs": [*state["logs"], f"[DIRECT] '{dish['dishKey']}' resolved by exact FAO match"],
         "action": "advance_index",
     }
@@ -137,7 +146,7 @@ def check_fao_match(state: PlateState) -> dict[str, Any]:
 def fuzzy_match_dish(state: PlateState) -> dict[str, Any]:
     dish = _current_dish(state)
     best = process.extractOne(
-        dish["dishKey"], _KNOWN_KEYS, scorer=fuzz.token_sort_ratio, score_cutoff=FUZZY_THRESHOLD
+        dish["dishKey"], _get_known_keys(), scorer=fuzz.token_sort_ratio, score_cutoff=FUZZY_THRESHOLD
     )
 
     if best is None:
@@ -147,6 +156,7 @@ def fuzzy_match_dish(state: PlateState) -> dict[str, Any]:
         }
 
     matched_key = best[0]
+    fuzzy_score = best[1]
     result = lookup_direct_fao(matched_key)
     if result is None:
         return {
@@ -154,9 +164,11 @@ def fuzzy_match_dish(state: PlateState) -> dict[str, Any]:
             "action": "ai_reclassify_dish",
         }
 
+    confidence = 0.70 + (fuzzy_score - FUZZY_THRESHOLD) * 0.0088
+    confidence = max(0.70, min(0.82, confidence))
     return {
-        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "fuzzy", result)],
-        "logs": [*state["logs"], f"[FUZZY] '{dish['dishKey']}' -> '{matched_key}'"],
+        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "fuzzy", result, confidence=confidence)],
+        "logs": [*state["logs"], f"[FUZZY] '{dish['dishKey']}' -> '{matched_key}' (score={fuzzy_score:.0f})"],
         "action": "advance_index",
     }
 
@@ -175,7 +187,7 @@ def ai_reclassify_dish(state: PlateState) -> dict[str, Any]:
         return {"action": "check_off_match"}
 
     return {
-        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "ai_reclassify", result)],
+        "resolved_dishes": [*state["resolved_dishes"], _resolved_entry(dish, "ai_reclassify", result, confidence=0.65)],
         "logs": [*state["logs"], f"[AI] '{dish['dishKey']}' -> '{reclassified}'"],
         "action": "advance_index",
     }
@@ -205,7 +217,7 @@ def check_off_match(state: PlateState) -> dict[str, Any]:
             "action": "mark_unresolved",
         }
 
-    entry = _resolved_entry(dish, "off", result)
+    entry = _resolved_entry(dish, "off", result, confidence=0.75)
     if result.get("serving_grams"):
         entry["estimatedGrams"] = float(result["serving_grams"])
 

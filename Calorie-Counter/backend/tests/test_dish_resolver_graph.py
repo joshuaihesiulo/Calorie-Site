@@ -61,7 +61,7 @@ class TestFuzzyPath:
         entry = result["resolved_dishes"][0]
         assert entry["resolution_method"] == "fuzzy"
         assert entry["fao_result"]["key"] == "egusi_soup"
-        assert "[FUZZY] 'egusi_sp' -> 'egusi_soup'" in result["logs"]
+        assert any("[FUZZY] 'egusi_sp' -> 'egusi_soup'" in log for log in result["logs"])
 
 
 # ---------------------------------------------------------------------------

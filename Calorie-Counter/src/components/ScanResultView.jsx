@@ -8,6 +8,13 @@ const RESOLUTION_LABELS = {
   ai_reclassify: 'AI',
 };
 
+function confidenceBadge(confidence) {
+  const pct = Math.round((confidence || 0) * 100);
+  if (pct >= 80) return { color: 'text-[#00F090]', bg: 'bg-[#00F090]/10', label: `${pct}%` };
+  if (pct >= 60) return { color: 'text-amber-400', bg: 'bg-amber-400/10', label: `${pct}%` };
+  return { color: 'text-red-400', bg: 'bg-red-400/10', label: `${pct}%` };
+}
+
 function humanize(key) {
   return String(key).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -47,6 +54,7 @@ export default function ScanResultView() {
   const dishes = scannedFoodData.dishes || [];
   const totals = scannedFoodData.totals || {};
   const unresolvedDishes = scannedFoodData.unresolvedDishes || [];
+  const steps = scannedFoodData.steps || [];
   const selectedQuantity = Number(scannedFoodData.selectedQuantity) || 1;
 
   const name = primaryDishName(scannedFoodData);
@@ -86,6 +94,18 @@ export default function ScanResultView() {
             <div className="flex items-start justify-between mb-6">
               <div className="min-w-0">
                 <span className="text-xs font-black text-[#8A8A9E] uppercase block mb-1">Dynamically Sourced (WAFCT · Open Food Facts)</span>
+                {steps.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {steps.map((s, i) => (
+                      <span key={i} className="bg-white/5 border border-white/10 text-[#8A8A9E] text-[9px] font-bold px-2 py-0.5 rounded-full">
+                        {s.step === 'identifying' ? 'Gemini' : 'Nutrition'} · {(s.duration_ms / 1000).toFixed(1)}s
+                      </span>
+                    ))}
+                    <span className="bg-[#00F090]/10 border border-[#00F090]/20 text-[#00F090] text-[9px] font-bold px-2 py-0.5 rounded-full">
+                      Total · {((steps.reduce((a, s) => a + s.duration_ms, 0)) / 1000).toFixed(1)}s
+                    </span>
+                  </div>
+                )}
                 <h2 className="text-2xl font-black tracking-tight text-[#00F090] mb-2 truncate">{name}</h2>
 
                 {scaledDishes.length > 0 && (
@@ -154,6 +174,15 @@ export default function ScanResultView() {
                       <span className="text-sm font-black text-white block truncate">{d.displayName || d.dishKey}</span>
                       <span className="text-[10px] font-bold text-[#8A8A9E]">
                         {Math.round(d.grams)}g estimated · {RESOLUTION_LABELS[d.resolutionMethod] || d.resolutionMethod} match
+                        {d.confidence > 0 && (() => {
+                          const badge = confidenceBadge(d.confidence);
+                          return (
+                            <span className={`ml-1 inline-flex items-center gap-0.5 ${badge.color}`}>
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full ${badge.bg.replace('/10', '')}`} />
+                              {badge.label}
+                            </span>
+                          );
+                        })()}
                         {d.faoResult?.source === 'open_food_facts' && (
                           <span className="text-[#00F090]"> · Open Food Facts</span>
                         )}

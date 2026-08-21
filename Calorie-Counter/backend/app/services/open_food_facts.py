@@ -12,6 +12,7 @@ backend (``calories_per_100g`` etc.), plus ``serving_grams`` /
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 import time
@@ -116,8 +117,21 @@ HEADERS = {
 }
 
 
-def _get(url: str, params: dict | None = None) -> dict | None:
+async def _get(url: str, params: dict | None = None) -> dict | None:
     """GET with the shared 2s timeout; returns JSON dict or None on any failure."""
+    try:
+        response = await asyncio.to_thread(
+            requests.get, url, params=params, timeout=TIMEOUT_SECONDS, headers=HEADERS
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as err:
+        logger.warning("Open Food Facts request failed: %s", err)
+        return None
+
+
+def _get_sync(url: str, params: dict | None = None) -> dict | None:
+    """Synchronous GET with the shared 2s timeout; returns JSON dict or None."""
     try:
         response = requests.get(url, params=params, timeout=TIMEOUT_SECONDS, headers=HEADERS)
         response.raise_for_status()
@@ -127,7 +141,7 @@ def _get(url: str, params: dict | None = None) -> dict | None:
         return None
 
 
-def fetch_snack_by_query(search_term: str) -> dict | None:
+async def fetch_snack_by_query(search_term: str) -> dict | None:
     """Search OFF for a packaged snack, normalized to the backend profile.
 
     Returns ``None`` when the search fails, finds nothing, or no candidate
@@ -142,7 +156,7 @@ def fetch_snack_by_query(search_term: str) -> dict | None:
     if cached is not None and time.monotonic() - cached[0] < CACHE_TTL_SECONDS:
         return cached[1]
 
-    payload = _get(
+    payload = await _get(
         SEARCH_URL,
         params={
             "search_terms": norm,
@@ -162,7 +176,38 @@ def fetch_snack_by_query(search_term: str) -> dict | None:
     return result
 
 
-def fetch_snack_by_barcode(barcode: str) -> dict | None:
+def fetch_snack_by_query_sync(search_term: str) -> dict | None:
+    """Synchronous version of fetch_snack_by_query for use in sync graph nodes."""
+    norm = " ".join(search_term.strip().lower().split())
+    if not norm:
+        return None
+
+    cache = _cache()
+    cached = cache.get(norm)
+    if cached is not None and time.monotonic() - cached[0] < CACHE_TTL_SECONDS:
+        return cached[1]
+
+    payload = _get_sync(
+        SEARCH_URL,
+        params={
+            "search_terms": norm,
+            "search_simple": 1,
+            "action": "process",
+            "json": 1,
+            "page_size": 5,
+        },
+    )
+
+    result: dict | None = None
+    if payload:
+        products = payload.get("products") or []
+        result = _pick_best(products, norm)
+
+    cache[norm] = (time.monotonic(), result)
+    return result
+
+
+async def fetch_snack_by_barcode(barcode: str) -> dict | None:
     """Look up a single product by its barcode (used by package-label flow)."""
     norm = barcode.strip()
     if not norm:
@@ -173,7 +218,7 @@ def fetch_snack_by_barcode(barcode: str) -> dict | None:
     if cached is not None and time.monotonic() - cached[0] < CACHE_TTL_SECONDS:
         return cached[1]
 
-    payload = _get(PRODUCT_URL.format(barcode=norm))
+    payload = await _get(PRODUCT_URL.format(barcode=norm))
     result = None
     if payload and payload.get("status") == 1:
         result = _to_profile(payload.get("product") or {})

@@ -179,6 +179,7 @@ export const useBoundStore = create((set, get) => ({
   scanError: null,
   capturedImageSrc: null,
   scannedFoodData: null,
+  scanStep: null,
 
   // Real Food Diary Log — starts empty, no seed/mock entries
   loggedMeals: [],
@@ -304,11 +305,11 @@ export const useBoundStore = create((set, get) => ({
   },
 
   analyzeFoodImage: async (base64Image) => {
-    set({ scanLoading: true, scanError: null, capturedImageSrc: base64Image });
+    set({ scanLoading: true, scanError: null, capturedImageSrc: base64Image, scanStep: 'Preparing image...' });
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 90000);
+    const timer = setTimeout(() => controller.abort(), 65000);
     try {
-      const res = await fetch('/api/analyze-plate', {
+      const res = await fetch('/api/analyze-plate-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64Image }),
@@ -323,11 +324,50 @@ export const useBoundStore = create((set, get) => ({
         }
         throw new Error(message);
       }
-      const data = (await res.json()) || {};
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let resultData = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.step === 'done') {
+              set({ scanStep: event.message });
+            } else if (event.step === 'result') {
+              resultData = event.data;
+            } else if (event.step === 'error') {
+              throw new Error(event.message);
+            } else if (event.message) {
+              set({ scanStep: event.message });
+            }
+          } catch (parseErr) {
+            if (parseErr instanceof Error && parseErr.message !== 'Unexpected end of JSON input') {
+              throw parseErr;
+            }
+          }
+        }
+      }
+
+      if (!resultData) {
+        throw new Error('No result received from analysis.');
+      }
+
       set({
         scanLoading: false,
+        scanStep: null,
         currentView: 'result',
-        scannedFoodData: { ...data, selectedQuantity: 1 },
+        scannedFoodData: { ...resultData, selectedQuantity: 1 },
         scannedCount: get().scannedCount + 1,
       });
     } catch (err) {
@@ -339,9 +379,10 @@ export const useBoundStore = create((set, get) => ({
         /failed to fetch|network/i.test(err.message || '');
       set({
         scanLoading: false,
+        scanStep: null,
         scanError: isNetworkError
           ? aborted
-            ? 'The analysis server took too long (serverless functions can take up to ~60s for AI vision analysis). Try again — retries are faster after the first warm-up call.'
+            ? 'The analysis server took too long (limit ~60s). Try again — retries are faster after the first warm-up call.'
             : 'Cannot reach the analysis server. In local dev, start it with backend\\start-server.cmd (or run npm run dev:all). Press Retry scan to try again.'
           : err.message || 'An issue occurred during analysis.',
       });

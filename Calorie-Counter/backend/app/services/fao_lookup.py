@@ -21,16 +21,31 @@ from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
-_foods: list[dict] = json.loads((DATA_DIR / "fao_wafct.json").read_text(encoding="utf-8"))
-_dish_recipes: dict[str, list[dict]] = json.loads(
-    (DATA_DIR / "dish_ingredients.json").read_text(encoding="utf-8")
-)
-_snacks: dict[str, dict] = json.loads(
-    (DATA_DIR / "snacks.json").read_text(encoding="utf-8")
-)
-_alias_table: dict[str, list[str]] = json.loads(
-    (DATA_DIR / "food_aliases.json").read_text(encoding="utf-8")
-)
+_foods: list[dict] = []
+_dish_recipes: dict[str, list[dict]] = {}
+_snacks: dict[str, dict] = {}
+_aliases: dict[str, str] = {}
+_loaded = False
+
+
+def _ensure_loaded() -> None:
+    """Load JSON datasets on first use instead of at import time."""
+    global _foods, _dish_recipes, _snacks, _aliases, _loaded
+    if _loaded:
+        return
+    _foods = json.loads((DATA_DIR / "fao_wafct.json").read_text(encoding="utf-8"))
+    _dish_recipes = json.loads(
+        (DATA_DIR / "dish_ingredients.json").read_text(encoding="utf-8")
+    )
+    _snacks = json.loads((DATA_DIR / "snacks.json").read_text(encoding="utf-8"))
+    alias_table: dict[str, list[str]] = json.loads(
+        (DATA_DIR / "food_aliases.json").read_text(encoding="utf-8")
+    )
+    _aliases = {}
+    for canonical, alias_list in alias_table.items():
+        for alias in alias_list:
+            _aliases[_normalize(alias)] = canonical
+    _loaded = True
 
 NUTRIENT_FIELDS = (
     "calories_per_100g",
@@ -45,12 +60,6 @@ def _normalize(text: str) -> str:
     """Case-fold and collapse whitespace for case-insensitive comparisons."""
     return " ".join(text.strip().lower().split())
 
-
-# alias (case-folded, normalized) -> canonical dish/snack key
-_aliases: dict[str, str] = {}
-for _canonical, _alias_list in _alias_table.items():
-    for _alias in _alias_list:
-        _aliases[_normalize(_alias)] = _canonical
 
 
 def _find_food(ingredient_name: str) -> dict | None:
@@ -70,6 +79,7 @@ def get_all_known_keys() -> list[str]:
     FAO/WAFCT food names. Lookups are case-insensitive, so keys are
     deduplicated case-folded.
     """
+    _ensure_loaded()
     keys: list[str] = []
     seen: set[str] = set()
 
@@ -133,6 +143,7 @@ def lookup_direct_fao(key: str) -> dict | None:
     profile), then a direct record in ``fao_wafct.json`` (exact name, then
     substring match).
     """
+    _ensure_loaded()
     wanted = _normalize(key)
     canonical = _aliases.get(wanted)
     if canonical is not None:

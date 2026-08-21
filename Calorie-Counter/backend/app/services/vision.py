@@ -122,18 +122,26 @@ def _fold(text: str) -> str:
 # Best-effort canonicalization map for whatever casing/spacing Gemini returns.
 # Keys are indexed by both underscore and space forms so "jollof_rice" and
 # "Jollof Rice" both resolve to the canonical "jollof_rice".
-_KNOWN_BY_LOWER: dict[str, str] = {}
-for _key in get_all_known_keys():
-    _folded = _fold(_key)
-    _KNOWN_BY_LOWER[_folded] = _key
-    if "_" in _folded:
-        _KNOWN_BY_LOWER[_folded.replace("_", " ")] = _key
+_known_by_lower: dict[str, str] | None = None
+
+
+def _get_known_by_lower() -> dict[str, str]:
+    """Lazily build the canonicalization map on first access."""
+    global _known_by_lower
+    if _known_by_lower is None:
+        _known_by_lower = {}
+        for key in get_all_known_keys():
+            folded = _fold(key)
+            _known_by_lower[folded] = key
+            if "_" in folded:
+                _known_by_lower[folded.replace("_", " ")] = key
+    return _known_by_lower
 
 
 def _is_retryable(err: Exception) -> bool:
     """Rate-limit / overload signals worth retrying."""
     msg = str(err).lower()
-    return any(token in msg for token in ("503", "429", "overloaded", "high demand", "rate limit"))
+    return any(token in msg for token in ("503", "429", "overloaded", "high demand", "rate limit", "timeout"))
 
 
 def _decode_image(image_base64: str) -> tuple[str, bytes]:
@@ -170,7 +178,7 @@ async def identify_dishes(image_base64: str) -> list[dict]:
     last_error: Exception | None = None
     for attempt in range(MAX_ATTEMPTS):
         try:
-            response = await model.generate_content_async(parts)
+            response = await asyncio.wait_for(model.generate_content_async(parts), timeout=30)
             break
         except Exception as err:  # noqa: BLE001 — retryable provider errors
             last_error = err
@@ -184,6 +192,6 @@ async def identify_dishes(image_base64: str) -> list[dict]:
 
     for dish in dishes:
         key = _fold(str(dish.get("dishKey", "")))
-        dish["dishKey"] = _KNOWN_BY_LOWER.get(key, key)
+        dish["dishKey"] = _get_known_by_lower().get(key, key)
 
     return dishes

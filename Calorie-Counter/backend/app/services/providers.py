@@ -69,6 +69,7 @@ def ai_reclassify_dish(unmapped_key: str, known_keys: list[str]) -> str | None:
             temperature=0,
             max_tokens=64,
             response_format={"type": "json_object"},
+            timeout=10,
         )
     except Exception as exc:  # noqa: BLE001 — provider failures are non-fatal
         logger.warning("Groq reclassification failed for %r: %s", unmapped_key, exc)
