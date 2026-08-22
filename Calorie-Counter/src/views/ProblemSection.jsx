@@ -14,14 +14,14 @@ export default function ProblemSection() {
             Eating, Simplified<br />Together.
           </h2>
           <p className="text-gray-500 max-w-md font-medium">
-            Craving a crunchy snack but want to stay on track with your goals? NaijaCounts gives local meals the nutrition context they deserve.
+            Craving a crunchy snack but want to stay on track with your goals? Kaloriq gives local meals the nutrition context they deserve.
           </p>
 
           {/* Graphical Target Container */}
           <div className="mt-8 max-w-md aspect-square rounded-[2rem] bg-gray-50 border border-gray-100 flex items-center justify-center p-8 relative">
             <div className="w-64 h-64 rounded-full border-4 border-dashed border-gray-200 flex items-center justify-center animate-[spin_40s_linear_infinite]">
               <div className="w-32 h-32 rounded-full border-2 border-[#E92A43] bg-white flex items-center justify-center shadow-lg transform -rotate-[spin_40s_linear_infinite]">
-                <span className="text-[#E92A43] font-black text-sm tracking-tighter">NaijaCounts</span>
+                <span className="text-[#E92A43] font-black text-sm tracking-tighter">Kaloriq</span>
               </div>
             </div>
           </div>

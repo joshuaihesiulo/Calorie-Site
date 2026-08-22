@@ -95,7 +95,7 @@ export default function ScanResultView() {
       <div className="flex items-center justify-between p-5 lg:p-7 border-b border-white/5 backdrop-blur-md bg-black/40 z-10">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-xl bg-[#00F090] transform rotate-12 animate-pulse" />
-          <span className="text-xl font-black tracking-tight text-white">NaijaCounts VLM</span>
+          <span className="text-xl font-black tracking-tight text-white">Kaloriq VLM</span>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setView('scan')} className="bg-white/5 border border-white/10 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-white/10">Re-Scan</button>

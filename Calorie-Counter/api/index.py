@@ -1,4 +1,4 @@
-"""Vercel Python function entrypoint for the NaijaCounts API.
+"""Vercel Python function entrypoint for the Kaloriq API.
 
 Vercel routes every ``/api/*`` request to this file (``api/index.py``).
 It re-exports the FastAPI application from ``backend/app/main.py`` as an

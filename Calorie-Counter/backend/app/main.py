@@ -1,4 +1,4 @@
-"""NaijaCounts API — FastAPI application entry point."""
+"""Kaloriq API — FastAPI application entry point."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import analyze
 
-app = FastAPI(title="NaijaCounts API", version="0.1.0")
+app = FastAPI(title="Kaloriq API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,

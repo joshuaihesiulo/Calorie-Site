@@ -37,7 +37,7 @@ export default function Footer() {
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-xl bg-[#00F090] transform rotate-12" />
-              <span className="text-xl font-black tracking-tight">NaijaCounts</span>
+              <span className="text-xl font-black tracking-tight">Kaloriq</span>
             </div>
             <p className="text-white/40 text-xs leading-relaxed max-w-[220px]">
               AI-powered calorie tracking built for Nigerian food. From jollof to suya, every meal counts.
@@ -79,7 +79,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/30 text-xs font-medium">
-            &copy; {new Date().getFullYear()} NaijaCounts. Built for Lagos, Abuja, and everywhere in between.
+            &copy; {new Date().getFullYear()} Kaloriq. Built for Lagos, Abuja, and everywhere in between.
           </p>
           <div className="flex items-center gap-4">
             <span className="text-[10px] font-bold text-white/20 uppercase tracking-wider">Powered by FAO WAFCT &middot; Open Food Facts</span>

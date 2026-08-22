@@ -26,7 +26,7 @@ export default function CounterSection() {
 
         <div className="md:col-span-5 flex flex-col justify-center">
           <p className="text-[#2C3768] font-semibold text-base leading-relaxed mb-6">
-            Know what's on your plate instantly. NaijaCounts estimates calories and macros from photos, local dish names, and portion sizes.
+            Know what's on your plate instantly. Kaloriq estimates calories and macros from photos, local dish names, and portion sizes.
           </p>
           {/* Slider Pagination Controls */}
           <div className="flex gap-1.5">

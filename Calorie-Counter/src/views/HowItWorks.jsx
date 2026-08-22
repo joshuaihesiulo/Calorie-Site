@@ -15,7 +15,7 @@ export default function HowItWorks() {
       <Reveal>
       <div className="max-w-3xl mx-auto text-center mb-16 relative z-10">
         <h2 className="text-3xl md:text-4xl font-black font-display text-[#2C3768] tracking-tighter mb-4">
-          How NaijaCounts Works
+          How Kaloriq Works
         </h2>
         <p className="text-gray-500 font-bold text-xs uppercase tracking-wider">
           From first snap to smarter eating — here's your 5-step journey.

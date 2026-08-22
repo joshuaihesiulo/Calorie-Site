@@ -1,4 +1,4 @@
-# NaijaCounts — Calorie Counter
+# Kaloriq — Calorie Counter
 
 AI-powered calorie & macro tracker for Nigerian and West African dishes. Capture a plate, identify every dish via Google Gemini Vision, and look up real nutritional data from the West African Food Composition Table (WAFCT).
 

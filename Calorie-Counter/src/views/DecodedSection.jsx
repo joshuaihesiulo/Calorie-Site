@@ -11,7 +11,7 @@ export default function DecodedSection() {
           Your Food, Decoded
         </h2>
         <p className="text-gray-400 text-xs md:text-sm max-w-xs text-right md:self-end leading-tight font-medium">
-          NaijaCounts helps you understand calories, portions, and nutrition patterns so you can eat smarter every single day.
+          Kaloriq helps you understand calories, portions, and nutrition patterns so you can eat smarter every single day.
         </p>
       </div>
       </Reveal>

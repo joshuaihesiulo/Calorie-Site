@@ -30,7 +30,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 md:px-6 py-3 md:py-4 flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-2 cursor-pointer" onClick={() => navTo('landing')}>
         <div className="w-8 h-8 rounded-xl bg-[#00F090] transform rotate-12 transition-transform hover:rotate-45 duration-300" />
-        <span className="text-2xl font-black font-display text-[#2C3768] tracking-tight">NaijaCounts</span>
+        <span className="text-2xl font-black font-display text-[#2C3768] tracking-tight">Kaloriq</span>
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">

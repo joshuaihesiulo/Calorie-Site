@@ -43,7 +43,7 @@ export default function SignUpView() {
         <div>
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-[#00F090] transform rotate-12" />
-            <span className="text-2xl font-black text-white tracking-tight">NaijaCounts</span>
+            <span className="text-2xl font-black text-white tracking-tight">Kaloriq</span>
           </div>
           <div className="space-y-6">
             <h3 className="text-white font-black text-2xl tracking-tight leading-tight">
@@ -87,7 +87,7 @@ export default function SignUpView() {
           <div className="text-center mb-8">
             <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-xl bg-[#00F090] transform rotate-12" />
-              <span className="text-xl font-black tracking-tight">NaijaCounts</span>
+              <span className="text-xl font-black tracking-tight">Kaloriq</span>
             </div>
             <h2 className="text-4xl font-black tracking-tight leading-none mb-3">
               Create Your<br />Naija Account
