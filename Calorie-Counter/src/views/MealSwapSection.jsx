@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { REAL_FOOD_IMAGES } from '../constants/images';
-import { findSwaps } from '../utils/mealSwap';
 import Reveal from '../components/Reveal';
 
 function MacroBar({ value, max, color }) {
@@ -24,33 +23,30 @@ const FEATURED = {
 
 const SWAP_IMAGES = {
   original: REAL_FOOD_IMAGES.heroLeft,
-  protein: REAL_FOOD_IMAGES.heroRight,
   carbs: REAL_FOOD_IMAGES.soupDetail,
-  balanced: REAL_FOOD_IMAGES.riceBowl,
 };
 
 const TAG_STYLES = {
-  protein: 'bg-[#00F090]/20 text-[#2C3768] border border-[#00F090]',
+  original: 'bg-[#3CE8E3]/20 text-[#2C3768] border border-[#3CE8E3]',
   carbs: 'bg-[#FFF4CA] text-[#2C3768] border border-[#FF7A30]/40',
-  balanced: 'bg-[#3CE8E3]/20 text-[#2C3768] border border-[#3CE8E3]',
 };
 
-const LABELS = {
-  protein: 'Higher Protein',
-  carbs: 'Higher Carb',
-  balanced: 'Balanced',
+const POUND_YAM_EGUSI = {
+  name: 'Pounded Yam & Egusi Soup',
+  estimatedCalories: 1112,
+  estimatedProtein: 45.6,
+  estimatedCarbs: 69.4,
+  estimatedFat: 68.2,
+  grams: 460,
+  tags: [{ label: 'High Protein', color: '#00F090', bg: 'bg-[#00F090]/15', text: 'text-[#00F090]', border: 'border-[#00F090]/30' }],
 };
 
 export default function MealSwapSection() {
   const swaps = useMemo(() => {
-    const orig = { protein: FEATURED.protein, carbs: FEATURED.carbs, fat: FEATURED.fat, name: FEATURED.name };
-    const proteinResult = findSwaps(FEATURED.calories, orig, 'protein', FEATURED.grams, 1);
-    const carbResult = findSwaps(FEATURED.calories, orig, 'carbs', FEATURED.grams, 1);
     return [
-      { ...proteinResult[0], preference: 'protein' },
       { ...FEATURED, preference: 'original', tags: [{ label: 'Scanned meal', color: '#3CE8E3', bg: 'bg-[#3CE8E3]/20', text: 'text-[#2C3768]', border: 'border-[#3CE8E3]' }] },
-      { ...carbResult[0], preference: 'carbs' },
-    ].filter(Boolean);
+      { ...POUND_YAM_EGUSI, preference: 'carbs' },
+    ];
   }, []);
 
   return (
@@ -107,7 +103,7 @@ export default function MealSwapSection() {
           </Reveal>
 
           {/* Right: Swap Options */}
-          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
             {swaps.map((swap, i) => {
               const isOriginal = swap.preference === 'original';
               const pref = swap.preference;
