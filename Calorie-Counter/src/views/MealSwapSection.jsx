@@ -38,7 +38,7 @@ const POUND_YAM_EGUSI = {
   estimatedCarbs: 69.4,
   estimatedFat: 68.2,
   grams: 460,
-  tags: [{ label: 'High Protein', color: '#00F090', bg: 'bg-[#00F090]/15', text: 'text-[#00F090]', border: 'border-[#00F090]/30' }],
+  tags: [{ label: 'Higher Carb', color: '#FF7A30', bg: 'bg-[#FF7A30]/15', text: 'text-[#FF7A30]', border: 'border-[#FF7A30]/30' }],
 };
 
 export default function MealSwapSection() {
