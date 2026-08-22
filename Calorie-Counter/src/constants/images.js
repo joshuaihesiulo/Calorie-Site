@@ -1,11 +1,11 @@
 // src/constants/images.js
 export const REAL_FOOD_IMAGES = {
-  // Section 1: Hero Layout Assets (Amala & Rich Spicy Jollof Platter)
-  heroLeft: "https://i.pinimg.com/736x/b9/7e/a1/b97ea14d0c7ed4496650c7af8f9a05bb.jpg", 
-  heroRight: "https://i.pinimg.com/1200x/a7/4b/cb/a74bcb0ac99a32475e945016731d8d39.jpg", 
+  // Section 1: Hero Layout Assets
+  heroLeft: "/jollof-rice.jpg",
+  heroRight: "/carbs-bowl.webp",
 
   // Section 3: Huge "Counter" Backdrop Dish
-  soupDetail: "https://i.pinimg.com/1200x/7e/4f/99/7e4f996e0c5fd99c5115460361b7289d.jpg", 
+  soupDetail: "/carbs-bowl.webp",
 
   // Section 4: Your Food, Decoded Portrait 
   userProfile: "https://i.pinimg.com/736x/3a/09/14/3a0914940e1240570810cb9fb8a2604f.jpg", 

@@ -13,7 +13,7 @@ export default function HeroSection() {
         <div className="lg:col-span-3 flex justify-center lg:justify-end animate-fadeUp" style={{ animationDelay: '80ms' }}>
           <div className="w-72 h-80 rounded-[2.5rem] p-4 relative bg-white shadow-2xl shadow-[#E92A43]/10 transform -rotate-6 overflow-hidden transition-transform duration-500 hover:rotate-0 hover:scale-[1.03]">
             <div className="p-3 w-full h-full rounded-[2rem] bg-gray-100 overflow-hidden relative border-6 border-red-800">
-              <img src={REAL_FOOD_IMAGES.heroLeft} alt="Amala plate" className="w-full h-full object-cover rounded-[1.5rem]" />
+              <img src={REAL_FOOD_IMAGES.heroLeft} alt="Jollof rice" className="w-full h-full object-cover rounded-[1.5rem]" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#E92A43]/30 to-transparent" />
             </div>
           </div>
@@ -46,7 +46,7 @@ export default function HeroSection() {
         {/* Right Hand Card Visual & Pill Data layout */}
         <div className="lg:col-span-3 flex flex-col items-center lg:items-start gap-4 animate-fadeUp" style={{ animationDelay: '240ms' }}>
           <div className="p-3 w-72 h-48 rounded-[2rem] p-3 bg-white shadow-xl transform rotate-6 overflow-hidden border-6 border-orange-600">
-            <img src={REAL_FOOD_IMAGES.heroRight} alt="Jollof rice" className="w-full h-full object-cover rounded-[1.5rem]" />
+            <img src={REAL_FOOD_IMAGES.heroRight} alt="Carbs bowl" className="w-full h-full object-cover rounded-[1.5rem]" />
           </div>
           <div className="flex gap-3 mt-2">
             <div className="w-20 h-20 rounded-full bg-[#3CE8E3]/20 flex flex-col items-center justify-center border border-[#3CE8E3]">
