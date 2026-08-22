@@ -13,16 +13,17 @@ function MacroBar({ value, max, color }) {
 }
 
 const FEATURED = {
-  name: 'Jollof Rice',
-  calories: 520,
-  protein: 26,
-  carbs: 58,
-  fat: 18,
-  grams: 300,
+  name: 'Pounded Yam & Egusi Soup',
+  calories: 1112,
+  protein: 45.6,
+  carbs: 69.4,
+  fat: 68.2,
+  grams: 460,
   image: REAL_FOOD_IMAGES.heroLeft,
 };
 
 const SWAP_IMAGES = {
+  original: REAL_FOOD_IMAGES.heroLeft,
   protein: REAL_FOOD_IMAGES.heroRight,
   carbs: REAL_FOOD_IMAGES.soupDetail,
   balanced: REAL_FOOD_IMAGES.riceBowl,
@@ -72,10 +73,10 @@ export default function MealSwapSection() {
           <Reveal delay={80} className="lg:col-span-4">
             <div className="bg-[#F9F8F4] rounded-[2rem] p-6 border border-gray-100">
               <span className="inline-block bg-[#E92A43]/10 text-[#E92A43] text-xs font-bold px-3 py-1.5 rounded-full mb-4">
-                Scanned Meal
+                Scanned Meal · 95% confidence
               </span>
               <div className="rounded-[1.5rem] overflow-hidden aspect-[4/3] mb-5">
-                <img src={FEATURED.image} alt="Scanned Jollof Rice" className="w-full h-full object-cover" />
+                <img src={FEATURED.image} alt="Pounded Yam & Egusi Soup" className="w-full h-full object-cover" />
               </div>
               <h3 className="text-xl font-black text-[#2C3768] tracking-tight mb-1">{FEATURED.name}</h3>
               <p className="text-gray-400 text-sm font-medium mb-5">{FEATURED.calories} kcal</p>
@@ -120,7 +121,7 @@ export default function MealSwapSection() {
                       {isOriginal ? 'Scanned meal' : (swap.tags?.[0]?.label || LABELS[pref])}
                     </span>
                     <div className="rounded-[1.25rem] overflow-hidden aspect-[4/3] mb-4">
-                      <img src={SWAP_IMAGES[imageKey] || SWAP_IMAGES.balanced} alt={swap.name} className="w-full h-full object-cover" />
+                      <img src={SWAP_IMAGES[imageKey] || SWAP_IMAGES.balanced} alt={isOriginal ? 'Pounded Yam & Egusi Soup' : swap.name} className="w-full h-full object-cover" />
                     </div>
                     <h4 className="text-base font-black text-[#2C3768] tracking-tight mb-1">{swap.name}</h4>
                     <p className="text-gray-400 text-xs font-bold mb-4">{swap.estimatedCalories || swap.calories} kcal</p>
